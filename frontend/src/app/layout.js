@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <div className="flex min-h-screen flex-col">
             <Navbar />
-            <main className="flex-1 pb-24 sm:pb-0">{children}</main>
+            <main className="flex-1  sm:pb-0">{children}</main>
             <FooterGate />
           </div>
           <MobileBottomNav />
