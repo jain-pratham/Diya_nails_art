@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+import { apiUrl } from "@/lib/api";
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -14,7 +15,7 @@ export default function AdminCategories() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/categories");
+      const res = await fetch(apiUrl("/api/categories"));
       const data = await res.json();
       setCategories(data);
     } catch (error) {
@@ -27,7 +28,7 @@ export default function AdminCategories() {
   const deleteCategory = async (id) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/categories/${id}`, {
+      const res = await fetch(apiUrl(`/api/categories/${id}`), {
         method: "DELETE",
       });
       if (res.ok) {

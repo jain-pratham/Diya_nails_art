@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
+import { apiUrl } from "@/lib/api";
 
 export default function CreateCategoryModal({ isOpen, onClose, onCategoryCreated }) {
   const [name, setName] = useState("");
@@ -17,7 +18,7 @@ export default function CreateCategoryModal({ isOpen, onClose, onCategoryCreated
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:5000/api/categories", {
+      const res = await fetch(apiUrl("/api/categories"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, description }),
