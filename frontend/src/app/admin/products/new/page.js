@@ -156,9 +156,9 @@ export default function NewProduct() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-12">
-      <div className="rounded-[28px] border border-[#ebe1d7] bg-white p-6 shadow-[0_18px_40px_rgba(115,80,60,0.05)]">
+      <div className="rounded-[28px] border border-[#ebe1d7] bg-white p-5 sm:p-6 shadow-[0_18px_40px_rgba(115,80,60,0.05)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#a8836e]">Products</p>
-        <h1 className="mt-2 text-3xl font-semibold text-[#3f2a20]">Add New Product</h1>
+        <h1 className="mt-2 text-2xl sm:text-3xl font-semibold text-[#3f2a20]">Add New Product</h1>
         <p className="mt-2 text-sm text-[#7e6554]">
           Create a product with multiple tags and keep the admin UI clean and stable.
         </p>
@@ -166,7 +166,7 @@ export default function NewProduct() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 rounded-[28px] border border-[#ebe1d7] bg-white p-6 shadow-[0_18px_40px_rgba(115,80,60,0.05)]"
+        className="space-y-6 rounded-[28px] border border-[#ebe1d7] bg-white p-5 sm:p-6 shadow-[0_18px_40px_rgba(115,80,60,0.05)]"
       >
         <div className="grid gap-6 xl:grid-cols-[1.05fr_1fr]">
           <div className="space-y-5">
@@ -189,7 +189,7 @@ export default function NewProduct() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">Price</label>
                     <input
@@ -239,7 +239,7 @@ export default function NewProduct() {
             <div className="rounded-3xl border border-[#ebe1d7] bg-[#fcfaf7] p-5">
               <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[#5b4032]">Images</h2>
 
-              <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {formData.images.map((image, index) => (
                   <div
                     key={`${index}-${image.slice(0, 20)}`}
@@ -287,7 +287,7 @@ export default function NewProduct() {
 
               <div className="mb-4 rounded-3xl border border-dashed border-[#d7c5b3] bg-white p-4">
                 <label className="mb-2 block text-sm font-medium text-gray-700">Add Custom Color / Tag</label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     value={customTag}
@@ -304,7 +304,7 @@ export default function NewProduct() {
                   <button
                     type="button"
                     onClick={addCustomTag}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#7a5641] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#664937]"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#7a5641] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#664937]"
                   >
                     <Plus size={16} />
                     Add
@@ -340,17 +340,17 @@ export default function NewProduct() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-[#ebe1d7] pt-5">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 border-t border-[#ebe1d7] pt-5">
           <Link
             href="/admin/products"
-            className="rounded-xl bg-[#f3ece4] px-6 py-2.5 font-medium text-[#5b4032] hover:bg-[#eadfce]"
+            className="rounded-xl bg-[#f3ece4] px-6 py-3 text-center font-medium text-[#5b4032] hover:bg-[#eadfce]"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex min-w-[150px] items-center justify-center gap-2 rounded-xl bg-[#3f2a20] px-6 py-2.5 font-medium text-white hover:bg-[#2e1e17] disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex min-w-[150px] items-center justify-center gap-2 rounded-xl bg-[#3f2a20] px-6 py-3 font-medium text-white hover:bg-[#2e1e17] disabled:cursor-not-allowed disabled:opacity-70"
           >
             {loading ? <Loader2 size={18} className="animate-spin" /> : "Save Product"}
           </button>

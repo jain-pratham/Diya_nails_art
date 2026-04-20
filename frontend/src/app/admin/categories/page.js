@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 
 export default function AdminCategories() {
@@ -41,9 +41,9 @@ export default function AdminCategories() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Categories</h1>
           <p className="text-gray-500 text-sm mt-1">Manage your product categories.</p>
         </div>
         {/* We can just point to Products -> New or add a modal trigger here if we wanted. But the modal is in Product form. */}
@@ -58,7 +58,26 @@ export default function AdminCategories() {
         ) : categories.length === 0 ? (
           <div className="p-8 text-center text-gray-500">No categories found. Add one from the Product screen.</div>
         ) : (
-          <table className="w-full text-left border-collapse">
+          <>
+            <div className="divide-y divide-gray-100 md:hidden">
+              {categories.map((cat) => (
+                <div key={cat._id} className="flex items-center justify-between gap-4 p-4">
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{cat.name}</p>
+                    <p className="text-sm text-gray-500 truncate">{cat.slug}</p>
+                  </div>
+                  <button
+                    onClick={() => deleteCategory(cat._id)}
+                    className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-lg transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+          <table className="hidden w-full text-left border-collapse md:table">
             <thead>
               <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
                 <th className="px-6 py-4 font-medium">Name</th>
@@ -84,6 +103,7 @@ export default function AdminCategories() {
               ))}
             </tbody>
           </table>
+          </>
         )}
       </div>
     </div>

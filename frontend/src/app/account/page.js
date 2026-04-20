@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -12,7 +11,6 @@ import {
   LogOut,
   ChevronRight,
   Package,
-  Clock,
   CheckCircle2,
   Loader2,
   X
@@ -60,11 +58,44 @@ export default function AccountPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
-      <div className="max-w-[1400px] mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12 items-start">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        <div className="mb-4 rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm lg:hidden">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-[#AF8F75] flex items-center justify-center text-white font-bold text-lg uppercase shrink-0">
+              {user.name.charAt(0)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-sm font-bold text-[#333333]">{user.name}</h2>
+              <p className="truncate text-[11px] text-gray-400 font-medium">{user.email}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-2 lg:hidden">
+          {SIDEBAR_ITEMS.map((item) => {
+            const active = activeTab === item.id;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wide transition-all ${
+                  active
+                    ? "border-[#AF8F75] bg-[#AF8F75] text-white"
+                    : "border-gray-200 bg-white text-gray-500"
+                }`}
+              >
+                <Icon size={14} />
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-12 items-start">
           
           {/* 🔹 SIDEBAR */}
-          <aside className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm sticky top-32">
+          <aside className="hidden lg:block bg-white border border-gray-100 rounded-2xl p-6 shadow-sm sticky top-32">
             <div className="flex items-center gap-4 mb-10 pb-6 border-b border-gray-50">
               <div className="w-12 h-12 rounded-full bg-[#AF8F75] flex items-center justify-center text-white font-bold text-lg uppercase">
                 {user.name.charAt(0)}
@@ -105,7 +136,7 @@ export default function AccountPage() {
           </aside>
 
           {/* 🔹 MAIN CONTENT */}
-          <main className="bg-white border border-gray-100 rounded-2xl p-8 lg:p-12 shadow-sm min-h-[600px]">
+          <main className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 lg:p-12 shadow-sm min-h-[520px]">
             {activeTab === "dashboard" && <DashboardContent user={user} />}
             {activeTab === "orders" && <OrdersContent />}
             {activeTab === "addresses" && <AddressesContent user={user} />}
@@ -125,9 +156,11 @@ export default function AccountPage() {
 function DashboardContent({ user }) {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <h1 className="text-2xl font-light text-[#333333] mb-8">Welcome back, <span className="font-semibold">{user.name.split(' ')[0]}!</span></h1>
+      <h1 className="text-xl sm:text-2xl font-light text-[#333333] mb-6 sm:mb-8">
+        Welcome back, <span className="font-semibold">{user.name.split(" ")[0]}!</span>
+      </h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
         <StatCard icon={Package} label="Total Orders" value="0" color="bg-blue-50 text-blue-600" />
         <StatCard icon={Heart} label="In Wishlist" value={user.wishlist?.length || 0} color="bg-pink-50 text-pink-600" />
         <StatCard icon={Ticket} label="Available Coupons" value="1" color="bg-orange-50 text-orange-600" />
@@ -144,8 +177,8 @@ function DashboardContent({ user }) {
 function OrdersContent() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <h2 className="text-xl font-light text-[#333333] mb-8">Your Orders</h2>
-      <div className="text-center py-20 border border-dashed border-gray-200 rounded-3xl">
+      <h2 className="text-lg sm:text-xl font-light text-[#333333] mb-6 sm:mb-8">Your Orders</h2>
+      <div className="text-center py-14 sm:py-20 border border-dashed border-gray-200 rounded-3xl">
         <ShoppingBag size={48} className="mx-auto text-gray-100 mb-4" />
         <p className="text-sm text-gray-400">You haven't placed any orders yet.</p>
         <Link href="/shop" className="mt-6 inline-block text-[10px] font-bold uppercase tracking-widest text-[#AF8F75] border-b border-[#AF8F75] pb-0.5">Start Shopping</Link>
@@ -201,23 +234,23 @@ function AddressesContent({ user }) {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-xl font-light text-[#333333]">Saved Addresses</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6 sm:mb-8">
+        <h2 className="text-lg sm:text-xl font-light text-[#333333]">Saved Addresses</h2>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="text-xs font-bold uppercase tracking-widest text-white bg-[#333333] px-6 py-2.5 rounded-lg hover:bg-black transition-colors"
+          className="w-full sm:w-auto text-xs font-bold uppercase tracking-widest text-white bg-[#333333] px-6 py-3 rounded-lg hover:bg-black transition-colors"
         >
           Add New
         </button>
       </div>
       
       {addresses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {addresses.map((addr, idx) => (
-            <div key={idx} className={`p-6 border-2 rounded-3xl relative transition-all duration-300 ${addr.isDefault ? 'border-[#AF8F75]/40 bg-[#AF8F75]/5 shadow-sm' : 'border-gray-100'}`}>
-              <div className="flex justify-between items-start mb-4">
+            <div key={idx} className={`p-5 sm:p-6 border-2 rounded-3xl relative transition-all duration-300 ${addr.isDefault ? 'border-[#AF8F75]/40 bg-[#AF8F75]/5 shadow-sm' : 'border-gray-100'}`}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start mb-4">
                 <h4 className="text-xs font-bold text-[#333333] uppercase tracking-[0.15em]">{addr.label}</h4>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {!addr.isDefault && (
                     <button 
                       onClick={() => handleSetDefault(idx)}
@@ -253,7 +286,7 @@ function AddressesContent({ user }) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-20 border border-dashed border-gray-200 rounded-3xl">
+        <div className="text-center py-14 sm:py-20 border border-dashed border-gray-200 rounded-3xl">
           <MapPin size={48} className="mx-auto text-gray-100 mb-4" />
           <p className="text-sm text-gray-400">No saved addresses found.</p>
         </div>
@@ -288,18 +321,18 @@ function AddressModal({ onClose, onSubmit, loading }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-lg rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-        <div className="p-8">
+    <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white w-full sm:max-w-lg rounded-t-[28px] sm:rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 max-h-[92vh] overflow-y-auto">
+        <div className="p-5 sm:p-8">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-light text-[#333333]">Add New Address</h3>
+            <h3 className="text-lg sm:text-xl font-light text-[#333333]">Add New Address</h3>
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
               <X size={20} />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Label (e.g. Home)</label>
                 <input 
@@ -339,7 +372,7 @@ function AddressModal({ onClose, onSubmit, loading }) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">City</label>
                 <input 
@@ -360,7 +393,7 @@ function AddressModal({ onClose, onSubmit, loading }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Zip Code</label>
                 <input 
@@ -381,7 +414,7 @@ function AddressModal({ onClose, onSubmit, loading }) {
               </div>
             </div>
 
-            <div className="pt-4 flex gap-4">
+            <div className="pt-4 flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button 
                 type="button" 
                 onClick={onClose}
@@ -409,13 +442,13 @@ function WishlistContent({ wishlist }) {
   const hasItems = wishlist && wishlist.length > 0;
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 text-center py-10">
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 text-center py-8 sm:py-10">
       <Heart size={48} className={`mx-auto mb-6 ${hasItems ? 'text-pink-100' : 'text-gray-100'}`} />
       <h2 className="text-lg font-light text-[#333333] mb-2">
         {hasItems ? `Items in your Wishlist (${wishlist.length})` : 'Your Wishlist is Empty'}
       </h2>
       <p className="text-xs text-gray-400 mb-8">Save items you love to find them later.</p>
-      <Link href="/shop" className="inline-block bg-[#AF8F75] text-white px-10 py-3 rounded-xl text-xs font-bold tracking-widest uppercase hover:bg-[#8e735e] transition-colors">
+      <Link href="/shop" className="inline-block bg-[#AF8F75] text-white px-8 sm:px-10 py-3 rounded-xl text-xs font-bold tracking-widest uppercase hover:bg-[#8e735e] transition-colors">
         {hasItems ? 'View Shop' : 'Go Shopping'}
       </Link>
     </div>
@@ -425,7 +458,7 @@ function WishlistContent({ wishlist }) {
 function CouponsContent() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <h2 className="text-xl font-light text-[#333333] mb-8">Available Coupons</h2>
+      <h2 className="text-lg sm:text-xl font-light text-[#333333] mb-6 sm:mb-8">Available Coupons</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex border border-dashed border-[#AF8F75] rounded-2xl overflow-hidden">
           <div className="bg-[#AF8F75] p-6 flex flex-col items-center justify-center text-white">
@@ -470,7 +503,7 @@ function SettingsContent({ user }) {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-xl">
-      <h2 className="text-xl font-light text-[#333333] mb-8">Profile Settings</h2>
+      <h2 className="text-lg sm:text-xl font-light text-[#333333] mb-6 sm:mb-8">Profile Settings</h2>
       
       {success && (
         <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-2xl text-green-600 text-xs font-bold text-center">
@@ -484,7 +517,7 @@ function SettingsContent({ user }) {
         </div>
       )}
 
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Full Name</label>
           <input 
@@ -538,7 +571,7 @@ function SettingsContent({ user }) {
 
 function StatCard({ icon: Icon, label, value, color }) {
   return (
-    <div className="bg-white border border-gray-50 p-6 rounded-2xl shadow-sm">
+    <div className="bg-white border border-gray-50 p-5 sm:p-6 rounded-2xl shadow-sm">
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${color}`}>
         <Icon size={20} />
       </div>
