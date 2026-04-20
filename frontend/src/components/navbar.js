@@ -50,12 +50,12 @@ export default function Navbar() {
           </button>
 
           {/* LOGO */}
-         <div className="absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 justify-center">
-  <Link href="/" className="flex items-center justify-center">
+         <div className="absolute left-1/2 top-1/2 z-20 flex h-[44px] w-[190px] -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-visible sm:w-[230px] md:h-auto md:w-auto">
+  <Link href="/" className="relative flex h-full w-full items-center justify-center md:h-auto md:w-auto">
     <img
       src="/logo.png"
       alt="Logo"
-      className="h-[45vw] max-h-[220px] w-auto sm:h-[38vw] sm:max-h-[260px] md:h-60 object-contain mix-blend-multiply drop-shadow-[0_2px_4px_rgba(0,0,0,0.08)]"
+      className="pointer-events-none absolute left-1/2 top-1/2 h-auto w-[300px] max-w-none -translate-x-1/2 -translate-y-1/2 object-contain mix-blend-multiply drop-shadow-[0_2px_4px_rgba(0,0,0,0.08)] sm:w-[350px] md:relative md:left-auto md:top-auto md:h-60 md:w-auto md:translate-x-0 md:translate-y-0"
     />
   </Link>
 </div>
