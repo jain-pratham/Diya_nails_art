@@ -15,6 +15,10 @@ const ITEMS = [
 export default function MobileBottomNav() {
   const pathname = usePathname();
 
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <nav className="fixed inset-x-0 bottom-3 z-[1100] px-3 md:hidden">
       <div className="mx-auto flex max-w-[420px] items-center justify-between rounded-[28px] border border-white/80 bg-white/95 px-2 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.12)] backdrop-blur-md">

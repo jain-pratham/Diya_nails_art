@@ -1,5 +1,29 @@
 const Product = require('../models/Product');
 
+const slugify = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+
+const generateUniqueSlug = async (name, excludeId) => {
+  const baseSlug = slugify(name) || `product-${Date.now()}`;
+  let nextSlug = baseSlug;
+  let counter = 1;
+
+  while (await Product.findOne({
+    slug: nextSlug,
+    ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+  })) {
+    counter += 1;
+    nextSlug = `${baseSlug}-${counter}`;
+  }
+
+  return nextSlug;
+};
+
 const parseTags = (tagsValue) => {
   if (!tagsValue || typeof tagsValue !== 'string') {
     return [];
@@ -104,6 +128,7 @@ exports.createProduct = async (req, res) => {
   try {
     const payload = {
       name: req.body.name,
+      slug: await generateUniqueSlug(req.body.name),
       price: Number(req.body.price),
       description: req.body.description,
       images: Array.isArray(req.body.images) ? req.body.images : [],
@@ -131,6 +156,7 @@ exports.updateProduct = async (req, res) => {
     if (update.stock !== undefined) update.stock = Number(update.stock);
     if (update.tags !== undefined) update.tags = normalizeTagsArray(update.tags);
     if (update.images !== undefined && !Array.isArray(update.images)) update.images = [];
+    if (update.name !== undefined) update.slug = await generateUniqueSlug(update.name, req.params.id);
 
     const product = await Product.findByIdAndUpdate(req.params.id, update, {
       new: true,

@@ -1,12 +1,14 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Search, User, ShoppingBag, ChevronLeft, ChevronRight, X, LogOut, Settings, Package, Menu } from "lucide-react";
 import MegaMenu from "@/components/MegaMenu";
 import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [openSearch, setOpenSearch] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -21,6 +23,10 @@ export default function Navbar() {
       setIsAuthModalOpen(true);
     }
   };
+
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <header className="w-full sticky top-0 z-[1000] bg-white">

@@ -7,6 +7,12 @@ const productSchema = new mongoose.Schema(
       required: [true, 'Product name is required'],
       trim: true,
     },
+    slug: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+    },
     price: {
       type: Number,
       required: [true, 'Product price is required'],
