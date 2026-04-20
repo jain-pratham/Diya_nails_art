@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Heart, Minus, Plus, ShieldCheck, Truck, RefreshCw, Award, ArrowLeft, Loader2 } from "lucide-react";
+import { Star, Heart, Minus, Plus, ShieldCheck, Truck, RefreshCw, Award, ArrowLeft, Loader2, Flame } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { tagDisplayName } from "@/lib/productTags";
 
@@ -130,30 +130,37 @@ export default function ProductPage() {
 
   return (
     <div className="bg-[#FDFBF7] min-h-screen text-[#333333]">
-      <div className="max-w-[1280px] mx-auto px-6 py-4 text-[11px] uppercase tracking-[0.1em] text-gray-400">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-[11px] uppercase tracking-[0.1em] text-gray-400 overflow-x-auto whitespace-nowrap">
         <Link href="/" className="hover:text-[#B39178]">Home</Link> /{" "}
         <Link href="/shop" className="hover:text-[#B39178]">Shop</Link> /{" "}
         <span className="text-gray-600 ml-1">{title}</span>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-2 gap-16">
-        <div className="flex flex-col-reverse md:flex-row gap-5">
-          <div className="flex md:flex-col gap-3 min-w-[80px]">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
+        <div className="flex flex-col gap-4 lg:flex-row lg:gap-5">
+          <div className="flex gap-3 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0 lg:min-w-[80px]">
             {images.map((img, i) => (
               <button
                 type="button"
                 key={`${img}-${i}`}
                 onClick={() => setActiveImage(img)}
-                className={`w-20 h-20 md:w-20 md:h-20 border-2 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                className={`h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0 border-2 rounded-xl overflow-hidden cursor-pointer transition-all duration-300 ${
                   activeImage === img ? "border-[#B39178] scale-105" : "border-gray-100 opacity-60 hover:opacity-100"
                 }`}
               >
-                <Image src={img} alt={`${title} thumbnail ${i + 1}`} width={100} height={100} className="object-cover w-full h-full" unoptimized />
+                <Image
+                  src={img}
+                  alt={`${title} thumbnail ${i + 1}`}
+                  width={100}
+                  height={100}
+                  className="h-full w-full object-cover"
+                  unoptimized
+                />
               </button>
             ))}
           </div>
 
-          <div className="flex-1 relative w-full h-[520px] rounded-3xl overflow-hidden bg-white shadow-sm border border-gray-50 group">
+          <div className="relative aspect-square w-full overflow-hidden rounded-[1.75rem] border border-gray-50 bg-white shadow-sm group sm:aspect-[4/5] lg:aspect-square">
             <Image
               src={activeImage}
               alt={title}
@@ -162,8 +169,8 @@ export default function ProductPage() {
               unoptimized
             />
 
-            <div className="absolute top-5 left-5">
-              <span className="bg-[#B39178] text-white text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+            <div className="absolute top-4 left-4 sm:top-5 sm:left-5">
+              <span className="bg-[#B39178] text-white text-[9px] sm:text-[10px] font-bold px-3 sm:px-4 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
                 {isSoldOut ? "Sold Out" : "In Stock"}
               </span>
             </div>
@@ -174,24 +181,24 @@ export default function ProductPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="mb-5 inline-flex items-center gap-2 self-start text-sm text-[#7e6554] hover:text-[#3f2a20]"
+            className="mb-4 sm:mb-5 inline-flex items-center gap-2 self-start text-sm text-[#7e6554] hover:text-[#3f2a20]"
           >
             <ArrowLeft size={16} />
             Back
           </button>
 
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 sm:mb-3">
             <div className="flex text-yellow-400">
               {[1, 2, 3, 4, 5].map((i) => (
                 <Star key={i} size={14} fill="currentColor" strokeWidth={1} />
               ))}
             </div>
-            <span className="text-[12px] text-gray-500 font-medium tracking-wide">
+            <span className="text-[11px] sm:text-[12px] text-gray-500 font-medium tracking-wide">
               ({reviews.length} Verified Reviews)
             </span>
           </div>
 
-          <h1 className="text-4xl font-bold text-[#333333] leading-[1.1] mb-4">
+          <h1 className="text-[1.9rem] sm:text-4xl font-bold text-[#333333] leading-[1.1] mb-3 sm:mb-4">
             {title}
           </h1>
 
@@ -203,23 +210,23 @@ export default function ProductPage() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 mb-6 bg-orange-50/50 self-start px-3 py-1.5 rounded-lg border border-orange-100/50">
-            <span className="animate-pulse">🔥</span>
-            <p className="text-[12px] text-orange-800 font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-3 mb-5 sm:mb-6 bg-orange-50/50 self-start px-3 py-1.5 rounded-lg border border-orange-100/50">
+            <Flame size={14} className="animate-pulse text-orange-500" />
+            <p className="text-[11px] sm:text-[12px] text-orange-800 font-bold uppercase tracking-wider">
               {product.stock || 0} left in stock
             </p>
           </div>
 
           <div className="flex items-baseline gap-4 mb-2">
-            <span className="text-3xl font-bold text-[#B39178]">
+            <span className="text-2xl sm:text-3xl font-bold text-[#B39178]">
               {currencyFormatter.format(product.price || 0)}
             </span>
           </div>
-          <p className="text-[13px] text-gray-500 italic mb-8 border-b border-gray-100 pb-6">
+          <p className="text-[12px] sm:text-[13px] text-gray-500 italic mb-6 sm:mb-8 border-b border-gray-100 pb-5 sm:pb-6">
             Tax included. Shipping calculated at checkout.
           </p>
 
-          <div className="mb-8 space-y-3">
+          <div className="mb-7 sm:mb-8 space-y-3">
             <div className="flex justify-between items-center text-[12px] font-bold uppercase tracking-wider">
               <span className="text-gray-600">Inventory Status</span>
               <span className="text-red-500">{isSoldOut ? "Out of stock" : "Ready to ship"}</span>
@@ -229,43 +236,47 @@ export default function ProductPage() {
             </div>
           </div>
 
-          <div className="space-y-6 mb-10">
+          <div className="space-y-6 mb-8 sm:mb-10">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-3">
+              <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-3">
                 Quantity
               </p>
-              <div className="flex gap-3 items-center">
-                <div className="flex items-center border-2 border-gray-100 rounded-full h-14 px-6 bg-white gap-8">
+              <div className="grid grid-cols-1 gap-3 sm:flex sm:gap-3 sm:items-center">
+                <div className="flex items-center justify-between border-2 border-gray-100 rounded-full h-12 sm:h-14 px-5 sm:px-6 bg-white gap-6 sm:gap-8">
                   <button
                     type="button"
                     onClick={() => setQty(qty > 1 ? qty - 1 : 1)}
                     className="text-gray-400 hover:text-black transition-colors"
                   >
-                    <Minus size={18} />
+                    <Minus size={17} />
                   </button>
-                  <span className="text-lg font-bold w-4 text-center">{qty}</span>
+                  <span className="text-base sm:text-lg font-bold w-5 text-center">{qty}</span>
                   <button
                     type="button"
                     onClick={() => setQty(qty + 1)}
                     className="text-gray-400 hover:text-black transition-colors"
                   >
-                    <Plus size={18} />
+                    <Plus size={17} />
                   </button>
                 </div>
-                <button className="flex-1 bg-[#333333] hover:bg-black text-white rounded-full font-bold uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-xl active:scale-95 h-14">
+                <button className="w-full sm:flex-1 bg-[#333333] hover:bg-black text-white rounded-full font-bold uppercase tracking-[0.16em] sm:tracking-[0.2em] text-[11px] sm:text-xs transition-all shadow-lg hover:shadow-xl active:scale-95 h-12 sm:h-14">
                   Add To Cart
                 </button>
-                <button className="w-14 h-14 border-2 border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-100 transition-all bg-white group shadow-sm">
+                <button className="hidden sm:flex w-14 h-14 border-2 border-gray-100 rounded-full items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-100 transition-all bg-white group shadow-sm">
                   <Heart size={22} className="group-active:fill-red-500" strokeWidth={1.5} />
                 </button>
               </div>
-              <button className="w-full bg-[#B39178] hover:bg-[#9c7d66] text-white h-14 rounded-full font-bold uppercase tracking-[0.2em] text-xs transition-all shadow-lg hover:shadow-xl active:scale-95 mb-4 mt-4">
+              <button className="w-full bg-[#B39178] hover:bg-[#9c7d66] text-white h-12 sm:h-14 rounded-full font-bold uppercase tracking-[0.16em] sm:tracking-[0.2em] text-[11px] sm:text-xs transition-all shadow-lg hover:shadow-xl active:scale-95 mb-3 sm:mb-4 mt-3 sm:mt-4">
                 Buy It Now
+              </button>
+              <button className="sm:hidden w-full flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white h-12 text-sm font-semibold text-[#7e6554] shadow-sm">
+                <Heart size={18} />
+                Save to Wishlist
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mt-8 py-8 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-6 sm:mt-8 py-6 sm:py-8 border-t border-gray-100">
             <div className="flex items-center gap-3">
               <div className="bg-gray-50 p-2 rounded-lg">
                 <ShieldCheck size={20} className="text-[#B39178]" />
@@ -294,11 +305,11 @@ export default function ProductPage() {
         </div>
       </div>
 
-      <div className="max-w-[1280px] mx-auto px-6 py-20 space-y-6">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-12 sm:py-20 space-y-5 sm:space-y-6">
         <div className="border-b border-gray-100 overflow-hidden">
           <button
             onClick={() => toggle("desc")}
-            className="w-full flex justify-between items-center py-6 text-[14px] font-bold uppercase tracking-[0.2em] text-[#333333] hover:text-[#B39178] transition-colors"
+            className="w-full flex justify-between items-center py-5 sm:py-6 text-[12px] sm:text-[14px] font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-[#333333] hover:text-[#B39178] transition-colors"
           >
             <span>Detailed Description</span>
             <div className="bg-gray-50 rounded-full p-2">
@@ -306,8 +317,8 @@ export default function ProductPage() {
             </div>
           </button>
 
-          <div className={`transition-all duration-500 ease-in-out ${openSection === "desc" ? "max-h-[500px] mb-8" : "max-h-0"}`}>
-            <div className="text-[14px] text-gray-500 leading-[1.8] space-y-4 pr-20">
+          <div className={`transition-all duration-500 ease-in-out ${openSection === "desc" ? "max-h-[500px] mb-6 sm:mb-8" : "max-h-0"}`}>
+            <div className="text-[13px] sm:text-[14px] text-gray-500 leading-[1.8] space-y-4 pr-0 sm:pr-20">
               <p>{product.description}</p>
               <ul className="list-disc pl-5 space-y-2 text-[#333] font-medium">
                 <li>Multiple tags for smarter search and filtering</li>
@@ -322,7 +333,7 @@ export default function ProductPage() {
         <div className="border-b border-gray-100 overflow-hidden">
           <button
             onClick={() => toggle("shipping")}
-            className="w-full flex justify-between items-center py-6 text-[14px] font-bold uppercase tracking-[0.2em] text-[#333333] hover:text-[#B39178] transition-colors"
+            className="w-full flex justify-between items-center py-5 sm:py-6 text-[12px] sm:text-[14px] font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-[#333333] hover:text-[#B39178] transition-colors"
           >
             <span>Shipping & Returns</span>
             <div className="bg-gray-50 rounded-full p-2">
@@ -330,8 +341,8 @@ export default function ProductPage() {
             </div>
           </button>
 
-          <div className={`transition-all duration-500 ease-in-out ${openSection === "shipping" ? "max-h-[500px] mb-8" : "max-h-0"}`}>
-            <div className="text-[14px] text-gray-500 leading-[1.8] pr-20">
+          <div className={`transition-all duration-500 ease-in-out ${openSection === "shipping" ? "max-h-[500px] mb-6 sm:mb-8" : "max-h-0"}`}>
+            <div className="text-[13px] sm:text-[14px] text-gray-500 leading-[1.8] pr-0 sm:pr-20">
               <p>We provide express shipping across India. Delivery time depends on location and current order load.</p>
             </div>
           </div>
@@ -340,7 +351,7 @@ export default function ProductPage() {
         <div className="border-b border-gray-100 overflow-hidden">
           <button
             onClick={() => toggle("review")}
-            className="w-full flex justify-between items-center py-6 text-[14px] font-bold uppercase tracking-[0.2em] text-[#333333] hover:text-[#B39178] transition-colors"
+            className="w-full flex justify-between items-center py-5 sm:py-6 text-[12px] sm:text-[14px] font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em] text-[#333333] hover:text-[#B39178] transition-colors"
           >
             <span>Verified Customer Reviews</span>
             <div className="bg-gray-50 rounded-full p-2">
@@ -348,33 +359,33 @@ export default function ProductPage() {
             </div>
           </button>
 
-          <div className={`transition-all duration-500 ease-in-out ${openSection === "review" ? "max-h-[3000px] mb-8 opacity-100" : "max-h-0 opacity-0"}`}>
-            <div className="bg-white rounded-3xl p-10 shadow-sm border border-gray-50">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-10 mb-16 border-b border-gray-100 pb-12">
+          <div className={`transition-all duration-500 ease-in-out ${openSection === "review" ? "max-h-[3000px] mb-6 sm:mb-8 opacity-100" : "max-h-0 opacity-0"}`}>
+            <div className="bg-white rounded-3xl p-5 sm:p-10 shadow-sm border border-gray-50">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-10 mb-8 sm:mb-16 border-b border-gray-100 pb-8 sm:pb-12">
                 <div className="text-center md:text-left">
                   <div className="flex items-center justify-center md:justify-start gap-4 mb-2">
-                    <span className="text-6xl font-black text-[#333]">5.0</span>
+                    <span className="text-4xl sm:text-6xl font-black text-[#333]">5.0</span>
                     <div>
                       <div className="flex text-yellow-400 mb-1">
                         {[1, 2, 3, 4, 5].map((i) => (
                           <Star key={i} size={18} fill="currentColor" strokeWidth={1} />
                         ))}
                       </div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-[#B39178]">Exceptional Quality</p>
+                      <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#B39178]">Exceptional Quality</p>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                  <p className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider">
                     Based on {reviews.length} verified shoppers
                   </p>
                 </div>
-                <button className="bg-[#333] hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-10 py-5 rounded-full shadow-lg transition-transform active:scale-95">
+                <button className="w-full md:w-auto bg-[#333] hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-8 sm:px-10 py-4 sm:py-5 rounded-full shadow-lg transition-transform active:scale-95">
                   Write A Review
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {reviews.map((r, i) => (
-                  <div key={i} className="bg-[#FDFBF7] rounded-2xl p-6 border border-gray-100 hover:shadow-md transition-all duration-300">
+                  <div key={i} className="bg-[#FDFBF7] rounded-2xl p-5 sm:p-6 border border-gray-100 hover:shadow-md transition-all duration-300">
                     <div className="flex justify-between items-start mb-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-1.5">
@@ -398,7 +409,7 @@ export default function ProductPage() {
                 ))}
               </div>
 
-              <div className="text-center mt-12 pt-8 border-t border-gray-50">
+              <div className="text-center mt-10 sm:mt-12 pt-8 border-t border-gray-50">
                 <button className="text-[11px] font-black uppercase tracking-[0.3em] text-[#B39178] hover:text-[#333] transition-colors underline underline-offset-8">
                   Show more reviews
                 </button>
