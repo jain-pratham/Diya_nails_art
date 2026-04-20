@@ -11,6 +11,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const REQUEST_BODY_LIMIT = "25mb";
 
 const allowedOrigins = [
   "https://diya-nails-art.vercel.app",
@@ -39,8 +40,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: REQUEST_BODY_LIMIT }));
+app.use(express.urlencoded({ extended: false, limit: REQUEST_BODY_LIMIT }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -48,6 +49,17 @@ app.use("/api/products", productRoutes);
 
 app.get("/", (req, res) => {
   res.send("API Running");
+});
+
+app.use((error, req, res, next) => {
+  if (error.type === "entity.too.large") {
+    return res.status(413).json({
+      message: "Upload is too large",
+      error: `Please upload fewer or smaller images. The request limit is ${REQUEST_BODY_LIMIT}.`,
+    });
+  }
+
+  return next(error);
 });
 
 const PORT = process.env.PORT || 5000;

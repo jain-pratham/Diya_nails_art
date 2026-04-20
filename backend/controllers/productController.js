@@ -126,11 +126,22 @@ exports.getProduct = async (req, res) => {
 // @access  Public for demo/admin flow
 exports.createProduct = async (req, res) => {
   try {
+    const name = String(req.body.name || '').trim();
+    const description = String(req.body.description || '').trim();
+
+    if (!name) {
+      return res.status(400).json({ message: 'Product name is required' });
+    }
+
+    if (!description) {
+      return res.status(400).json({ message: 'Product description is required' });
+    }
+
     const payload = {
-      name: req.body.name,
-      slug: await generateUniqueSlug(req.body.name),
+      name,
+      slug: await generateUniqueSlug(name),
       price: Number(req.body.price),
-      description: req.body.description,
+      description,
       images: Array.isArray(req.body.images) ? req.body.images : [],
       tags: normalizeTagsArray(req.body.tags),
       stock: Number(req.body.stock),
@@ -139,6 +150,13 @@ exports.createProduct = async (req, res) => {
     const product = await Product.create(payload);
     res.status(201).json(product);
   } catch (error) {
+    if (error.code === 11000 && error.keyPattern?.slug) {
+      return res.status(409).json({
+        message: 'Unable to create product',
+        error: 'A product with this slug already exists. Please change the product name and try again.',
+      });
+    }
+
     res.status(400).json({ message: 'Unable to create product', error: error.message });
   }
 };

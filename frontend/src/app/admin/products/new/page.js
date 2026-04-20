@@ -7,6 +7,11 @@ import { Loader2, UploadCloud, X, Check, Plus } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { PRODUCT_TAG_GROUPS, normalizeTag } from "@/lib/productTags";
 
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_TOTAL_IMAGE_SIZE_MB = 18;
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+const MAX_TOTAL_IMAGE_SIZE_BYTES = MAX_TOTAL_IMAGE_SIZE_MB * 1024 * 1024;
+
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -14,6 +19,32 @@ const readFileAsDataUrl = (file) =>
     reader.onerror = () => reject(new Error("Unable to read file"));
     reader.readAsDataURL(file);
   });
+
+const parseApiResponse = async (response) => {
+  const contentType = response.headers.get("content-type") || "";
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  if (contentType.includes("application/json")) {
+    return JSON.parse(text);
+  }
+
+  if (text.trimStart().startsWith("<")) {
+    throw new Error(
+      "The API returned an HTML page instead of JSON. Check NEXT_PUBLIC_API_URL and make sure the backend is running."
+    );
+  }
+
+  return { message: text };
+};
+
+const getDataUrlByteSize = (dataUrl) => {
+  const base64 = dataUrl.split(",")[1] || "";
+  return Math.ceil((base64.length * 3) / 4);
+};
 
 function TagGroup({ group, selectedTags, onToggle }) {
   return (
@@ -98,6 +129,22 @@ export default function NewProduct() {
 
     setImageUploading(true);
     try {
+      const oversizedFile = files.find((file) => file.size > MAX_IMAGE_SIZE_BYTES);
+
+      if (oversizedFile) {
+        throw new Error(`Each image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
+      }
+
+      const existingBytes = formData.images.reduce(
+        (total, image) => total + getDataUrlByteSize(image),
+        0
+      );
+      const nextBytes = files.reduce((total, file) => total + file.size, 0);
+
+      if (existingBytes + nextBytes > MAX_TOTAL_IMAGE_SIZE_BYTES) {
+        throw new Error(`Total uploaded images must be under ${MAX_TOTAL_IMAGE_SIZE_MB}MB.`);
+      }
+
       const uploads = await Promise.all(files.map((file) => readFileAsDataUrl(file)));
       setFormData((current) => ({
         ...current,
@@ -105,7 +152,7 @@ export default function NewProduct() {
       }));
     } catch (error) {
       console.error(error);
-      alert("Failed to read images.");
+      alert(error.message || "Failed to read images.");
     } finally {
       setImageUploading(false);
       event.target.value = "";
@@ -139,10 +186,10 @@ export default function NewProduct() {
         }),
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to create product");
+        throw new Error(data?.error || data?.message || "Failed to create product");
       }
 
       router.push("/admin/products");

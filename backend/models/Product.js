@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 
+const slugify = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -9,6 +17,7 @@ const productSchema = new mongoose.Schema(
     },
     slug: {
       type: String,
+      required: [true, 'Product slug is required'],
       trim: true,
       lowercase: true,
       unique: true,
@@ -48,5 +57,27 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.index({ tags: 1 });
+
+productSchema.pre('validate', async function ensureUniqueSlug() {
+  if (this.slug && !this.isModified('slug') && !this.isModified('name')) {
+    return;
+  }
+
+  const baseSlug = slugify(this.slug || this.name) || `product-${Date.now()}`;
+  let nextSlug = baseSlug;
+  let counter = 1;
+
+  while (
+    await this.constructor.exists({
+      slug: nextSlug,
+      _id: { $ne: this._id },
+    })
+  ) {
+    counter += 1;
+    nextSlug = `${baseSlug}-${counter}`;
+  }
+
+  this.slug = nextSlug;
+});
 
 module.exports = mongoose.model('Product', productSchema);
