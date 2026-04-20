@@ -34,7 +34,7 @@ export default function FeaturedProducts({
   const viewProducts = loading ? [] : products;
 
   return (
-    <section className="w-full py-14 md:py-20 bg-white">
+    <section className="w-full bg-white py-12 md:py-20">
       <div className="max-w-[1410px] mx-auto px-4 sm:px-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-end mb-8 md:mb-10">
           <h2 className="text-[1.65rem] sm:text-3xl md:text-[34px] text-[#333333] font-normal tracking-tight leading-tight">
@@ -48,14 +48,14 @@ export default function FeaturedProducts({
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-8 sm:gap-y-12">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:gap-x-6 sm:gap-y-12 md:grid-cols-3 lg:grid-cols-4">
           {loading
             ? Array.from({ length: limit }).map((_, index) => (
                 <div key={index} className="w-full flex flex-col cursor-pointer group/card">
-                  <div className="relative w-full aspect-[4/5] sm:aspect-square rounded-2xl overflow-hidden mb-4 bg-[#F8F1E7] animate-pulse" />
-                  <div className="px-1 space-y-2">
-                    <div className="h-4 w-3/4 rounded bg-gray-100 animate-pulse" />
-                    <div className="h-4 w-1/2 rounded bg-gray-100 animate-pulse" />
+                  <div className="relative mb-3 w-full aspect-square overflow-hidden rounded-[1.35rem] sm:rounded-[1.75rem] bg-[#F8F1E7] animate-pulse" />
+                  <div className="space-y-2 px-0.5">
+                    <div className="h-3.5 w-3/4 rounded bg-gray-100 animate-pulse" />
+                    <div className="h-3.5 w-1/2 rounded bg-gray-100 animate-pulse" />
                   </div>
                 </div>
               ))

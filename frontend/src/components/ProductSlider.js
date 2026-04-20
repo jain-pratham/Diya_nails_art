@@ -87,7 +87,7 @@ export default function ProductSlider({
   }, []);
 
   return (
-    <section className="w-full py-12 md:py-16 bg-white overflow-hidden">
+    <section className="w-full overflow-hidden bg-white py-12 md:py-16">
       <div className="max-w-[1458px] mx-auto px-4 sm:px-6">
         <div className="max-w-[1410px] mx-auto flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end mb-6 md:mb-8">
           <h2 className="text-2xl sm:text-3xl md:text-[34px] text-[#333333] font-normal tracking-tight">
@@ -101,36 +101,36 @@ export default function ProductSlider({
         <div className="max-w-[1410px] mx-auto">
           <div
             ref={scrollRef}
-            className="flex gap-4 sm:gap-[30px] overflow-x-auto snap-x snap-mandatory w-full hide-scrollbar [&::-webkit-scrollbar]:hidden"
+            className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto hide-scrollbar [&::-webkit-scrollbar]:hidden sm:gap-[30px]"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {loading
               ? Array.from({ length: 3 }).map((_, index) => (
                   <div
                     key={index}
-                    className="flex-shrink-0 w-[240px] sm:w-[280px] md:w-[330px] snap-start cursor-pointer group/card pb-4"
+                    className="group/card w-[44vw] min-w-[158px] max-w-[212px] flex-shrink-0 snap-start pb-4 sm:w-[280px] sm:max-w-none md:w-[330px]"
                   >
-                    <div className="relative w-[240px] h-[240px] sm:w-[280px] sm:h-[280px] md:w-[330px] md:h-[330px] rounded-2xl overflow-hidden mb-4 bg-gray-100 animate-pulse" />
-                    <div className="px-1 space-y-2">
-                      <div className="h-4 w-3/4 rounded bg-gray-100 animate-pulse" />
-                      <div className="h-4 w-1/2 rounded bg-gray-100 animate-pulse" />
+                    <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-[1.35rem] bg-gray-100 animate-pulse sm:mb-4 sm:rounded-[1.75rem]" />
+                    <div className="space-y-2 px-0.5">
+                      <div className="h-3.5 w-3/4 rounded bg-gray-100 animate-pulse" />
+                      <div className="h-3.5 w-1/2 rounded bg-gray-100 animate-pulse" />
                     </div>
                   </div>
                 ))
               : products.map((product) => (
                   <div
                     key={product._id}
-                    className="flex-shrink-0 w-[240px] sm:w-[280px] md:w-[330px] snap-start cursor-pointer group/card pb-4"
+                    className="group/card w-[44vw] min-w-[158px] max-w-[212px] flex-shrink-0 snap-start pb-4 sm:w-[280px] sm:max-w-none md:w-[330px]"
                   >
                     <Link href={`/product/${product._id}`} className="block">
-                      <div className="relative w-[240px] h-[240px] sm:w-[280px] sm:h-[280px] md:w-[330px] md:h-[330px] rounded-2xl overflow-hidden mb-4 bg-gray-100">
+                      <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-[1.35rem] bg-gray-100 sm:mb-4 sm:rounded-[1.75rem]">
                         {product.discount && (
-                          <div className="absolute top-3 left-3 z-10 bg-[#C181C8] bg-opacity-90 text-white text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                          <div className="absolute left-2.5 top-2.5 z-10 rounded-full bg-[#b39178] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-white shadow-sm sm:left-3 sm:top-3 sm:text-[10px]">
                             {product.discount}
                           </div>
                         )}
 
-                        <div className="w-full h-full group-hover/card:scale-105 transition-transform duration-500">
+                        <div className="h-full w-full transition-transform duration-500 group-hover/card:scale-[1.03]">
                           <Image
                             src={product.images?.[0] || "/hero1.png"}
                             fill
@@ -141,20 +141,20 @@ export default function ProductSlider({
                               e.target.style.display = "none";
                             }}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-tr from-[#9ABAE8] to-[#C181C8] opacity-50"></div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#2f2218]/6 via-transparent to-white/10"></div>
                         </div>
                       </div>
 
-                      <div className="px-1">
-                        <h3 className="text-[13px] sm:text-[13.5px] text-[#555555] font-normal leading-relaxed mb-1 truncate">
+                      <div className="px-0.5">
+                        <h3 className="mb-1 line-clamp-2 text-[13px] font-medium leading-[1.35] text-[#3f2a20] sm:text-[14px]">
                           {product.name}
                         </h3>
-                        <div className="flex items-center gap-2 text-[12px] sm:text-[13px]">
-                          <span className="text-[#C181C8] font-semibold">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-[13px]">
+                          <span className="font-semibold text-[#B39178]">
                             {currencyFormatter.format(product.price || 0)}
                           </span>
                           {product.originalPrice && (
-                            <span className="text-gray-400 text-[11px] line-through">
+                            <span className="text-[11px] text-gray-400 line-through">
                               {product.originalPrice}
                             </span>
                           )}
