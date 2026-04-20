@@ -25,6 +25,24 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+input,
+textarea,
+select {
+  color: #3f2a20;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9c7c6c;
+  opacity: 1;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
 @keyframes marquee {
   100% {
     transform: translateX(-50%);

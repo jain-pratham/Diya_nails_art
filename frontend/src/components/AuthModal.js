@@ -108,7 +108,7 @@ export default function AuthModal({ isOpen, onClose }) {
                   onChange={handleChange}
                   placeholder="Full Name"
                   required={!isLogin}
-                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-transparent focus:border-[#B39178]/30 focus:bg-white rounded-2xl outline-none text-[15px] transition-all duration-200"
+                  className="w-full pl-12 pr-4 py-3.5 bg-[#fbf8f4] border border-transparent focus:border-[#B39178]/30 focus:bg-white rounded-2xl outline-none text-[15px] text-[#4A3324] placeholder:text-[#b39a89] transition-all duration-200"
                 />
               </div>
             )}
@@ -126,7 +126,7 @@ export default function AuthModal({ isOpen, onClose }) {
                 onChange={handleChange}
                 placeholder="Email Address"
                 required
-                className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-transparent focus:border-[#B39178]/30 focus:bg-white rounded-2xl outline-none text-[15px] transition-all duration-200"
+                className="w-full pl-12 pr-4 py-3.5 bg-[#fbf8f4] border border-transparent focus:border-[#B39178]/30 focus:bg-white rounded-2xl outline-none text-[15px] text-[#4A3324] placeholder:text-[#b39a89] transition-all duration-200"
               />
             </div>
 
@@ -143,7 +143,7 @@ export default function AuthModal({ isOpen, onClose }) {
                 onChange={handleChange}
                 placeholder="Password"
                 required
-                className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-transparent focus:border-[#B39178]/30 focus:bg-white rounded-2xl outline-none text-[15px] transition-all duration-200"
+                className="w-full pl-12 pr-4 py-3.5 bg-[#fbf8f4] border border-transparent focus:border-[#B39178]/30 focus:bg-white rounded-2xl outline-none text-[15px] text-[#4A3324] placeholder:text-[#b39a89] transition-all duration-200"
               />
             </div>
 
