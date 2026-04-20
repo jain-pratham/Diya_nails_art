@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 const occasions = [
-  { name: "Wedding", image: "/wedding.png", tag: "bridal" },
-  { name: "Party", image: "/party.png", tag: "party" },
-  { name: "Casual", image: "/casual.png", tag: "casual" },
-  { name: "Holiday", image: "/holiday.png", tag: "glossy" },
+  { name: "Wedding", image: "/Wedding.png", tag: "bridal" },
+  { name: "Party", image: "/Party.png", tag: "party" },
+  { name: "Casual", image: "/Casual.png", tag: "casual" },
+  { name: "Holiday", image: "/Holiday.png", tag: "glossy" },
   { name: "Formal", image: "/Formal.png", tag: "matte" },
 ];
 
