@@ -1,0 +1,90 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+
+export default function AdminCategories() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/categories");
+      const data = await res.json();
+      setCategories(data);
+    } catch (error) {
+      console.error("Failed to fetch categories", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteCategory = async (id) => {
+    if (!confirm("Are you sure you want to delete this category?")) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/categories/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setCategories(categories.filter((c) => c._id !== id));
+      }
+    } catch (error) {
+      console.error("Failed to delete category", error);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
+          <p className="text-gray-500 text-sm mt-1">Manage your product categories.</p>
+        </div>
+        {/* We can just point to Products -> New or add a modal trigger here if we wanted. But the modal is in Product form. */}
+        {/* For now just a simple page to view and delete */}
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {loading ? (
+          <div className="p-8 flex justify-center">
+            <Loader2 className="animate-spin text-pink-500" size={32} />
+          </div>
+        ) : categories.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">No categories found. Add one from the Product screen.</div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
+                <th className="px-6 py-4 font-medium">Name</th>
+                <th className="px-6 py-4 font-medium">Slug</th>
+                <th className="px-6 py-4 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {categories.map((cat) => (
+                <tr key={cat._id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-gray-900">{cat.name}</td>
+                  <td className="px-6 py-4 text-gray-500">{cat.slug}</td>
+                  <td className="px-6 py-4 text-right flex justify-end gap-3">
+                    <button
+                      onClick={() => deleteCategory(cat._id)}
+                      className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
