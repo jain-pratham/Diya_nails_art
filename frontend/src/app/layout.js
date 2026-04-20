@@ -4,6 +4,7 @@ import Navbar from "@/components/navbar";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import FooterGate from "@/components/FooterGate";
 import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,12 +29,14 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>
-          <div className="flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1  sm:pb-0">{children}</main>
-            <FooterGate />
-          </div>
-          <MobileBottomNav />
+          <CartProvider>
+            <div className="flex min-h-screen flex-col">
+              <Navbar />
+              <main className="flex-1  sm:pb-0">{children}</main>
+              <FooterGate />
+            </div>
+            <MobileBottomNav />
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

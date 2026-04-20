@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Star, Heart, Minus, Plus, ShieldCheck, Truck, RefreshCw, Award, ArrowLeft, Loader2, Flame } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { tagDisplayName } from "@/lib/productTags";
+import { useCart } from "@/context/CartContext";
 
 const reviews = [
   {
@@ -55,6 +56,9 @@ export default function ProductPage() {
   const [activeImage, setActiveImage] = useState("");
   const [qty, setQty] = useState(1);
   const [openSection, setOpenSection] = useState("desc");
+  const [adding, setAdding] = useState(false);
+  const [cartMessage, setCartMessage] = useState("");
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -89,6 +93,26 @@ export default function ProductPage() {
 
   const toggle = (section) => {
     setOpenSection(openSection === section ? null : section);
+  };
+
+  const handleAddToCart = async ({ goToCart = false } = {}) => {
+    if (!product || isSoldOut) return;
+
+    setAdding(true);
+    setCartMessage("");
+
+    try {
+      await addToCart(product, qty);
+      setCartMessage("Added to cart");
+
+      if (goToCart) {
+        router.push("/cart");
+      }
+    } catch (err) {
+      setCartMessage(err.message || "Unable to add item to cart");
+    } finally {
+      setAdding(false);
+    }
   };
 
   if (loading) {
@@ -259,16 +283,31 @@ export default function ProductPage() {
                     <Plus size={17} />
                   </button>
                 </div>
-                <button className="w-full sm:flex-1 bg-[#333333] hover:bg-black text-white rounded-full font-bold uppercase tracking-[0.16em] sm:tracking-[0.2em] text-[11px] sm:text-xs transition-all shadow-lg hover:shadow-xl active:scale-95 h-12 sm:h-14">
-                  Add To Cart
+                  <button
+                    type="button"
+                    onClick={() => handleAddToCart()}
+                    disabled={isSoldOut || adding}
+                    className="w-full sm:flex-1 bg-[#333333] hover:bg-black text-white rounded-full font-bold uppercase tracking-[0.16em] sm:tracking-[0.2em] text-[11px] sm:text-xs transition-all shadow-lg hover:shadow-xl active:scale-95 h-12 sm:h-14 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                  {adding ? "Adding..." : isSoldOut ? "Sold Out" : "Add To Cart"}
                 </button>
                 <button className="hidden sm:flex w-14 h-14 border-2 border-gray-100 rounded-full items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-100 transition-all bg-white group shadow-sm">
                   <Heart size={22} className="group-active:fill-red-500" strokeWidth={1.5} />
                 </button>
               </div>
-              <button className="w-full bg-[#B39178] hover:bg-[#9c7d66] text-white h-12 sm:h-14 rounded-full font-bold uppercase tracking-[0.16em] sm:tracking-[0.2em] text-[11px] sm:text-xs transition-all shadow-lg hover:shadow-xl active:scale-95 mb-3 sm:mb-4 mt-3 sm:mt-4">
-                Buy It Now
+              <button
+                type="button"
+                onClick={() => handleAddToCart({ goToCart: true })}
+                disabled={isSoldOut || adding}
+                className="w-full bg-[#B39178] hover:bg-[#9c7d66] text-white h-12 sm:h-14 rounded-full font-bold uppercase tracking-[0.16em] sm:tracking-[0.2em] text-[11px] sm:text-xs transition-all shadow-lg hover:shadow-xl active:scale-95 mb-3 sm:mb-4 mt-3 sm:mt-4 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {adding ? "Adding..." : isSoldOut ? "Sold Out" : "Buy It Now"}
               </button>
+              {cartMessage && (
+                <p className="mb-3 text-center text-sm font-medium text-[#7a5641] sm:text-left">
+                  {cartMessage}
+                </p>
+              )}
               <button className="sm:hidden w-full flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white h-12 text-sm font-semibold text-[#7e6554] shadow-sm">
                 <Heart size={18} />
                 Save to Wishlist
@@ -404,7 +443,7 @@ export default function ProductPage() {
                         ))}
                       </div>
                     </div>
-                    <p className="text-[13px] text-gray-600 leading-relaxed font-medium">"{r.text}"</p>
+                    <p className="text-[13px] text-gray-600 leading-relaxed font-medium">{r.text}</p>
                   </div>
                 ))}
               </div>

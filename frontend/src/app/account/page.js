@@ -16,6 +16,7 @@ import {
   X
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { apiUrl } from "@/lib/api";
 
 const SIDEBAR_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -28,6 +29,9 @@ const SIDEBAR_ITEMS = [
 
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState("");
   const { user, logout, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -38,6 +42,37 @@ export default function AccountPage() {
       setActiveTab(tab);
     }
   }, []);
+
+  useEffect(() => {
+    if (!user?.token) return;
+
+    const fetchOrders = async () => {
+      setOrdersLoading(true);
+      setOrdersError("");
+
+      try {
+        const response = await fetch(apiUrl("/api/orders"), {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Unable to load orders");
+        }
+
+        setOrders(Array.isArray(data) ? data : []);
+      } catch (error) {
+        setOrdersError(error.message);
+        setOrders([]);
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [user?.token]);
 
   if (authLoading) {
     return (
@@ -137,8 +172,8 @@ export default function AccountPage() {
 
           {/* 🔹 MAIN CONTENT */}
           <main className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 lg:p-12 shadow-sm min-h-[520px]">
-            {activeTab === "dashboard" && <DashboardContent user={user} />}
-            {activeTab === "orders" && <OrdersContent />}
+            {activeTab === "dashboard" && <DashboardContent user={user} orders={orders} ordersLoading={ordersLoading} />}
+            {activeTab === "orders" && <OrdersContent orders={orders} loading={ordersLoading} error={ordersError} />}
             {activeTab === "addresses" && <AddressesContent user={user} />}
             {activeTab === "wishlist" && <WishlistContent wishlist={user.wishlist} />}
             {activeTab === "coupons" && <CouponsContent />}
@@ -153,7 +188,23 @@ export default function AccountPage() {
 
 /* 🔹 Content Sub-components */
 
-function DashboardContent({ user }) {
+const formatPrice = (price) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(price || 0);
+
+const formatDate = (date) =>
+  new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(date));
+
+function DashboardContent({ user, orders, ordersLoading }) {
+  const latestOrder = orders?.[0];
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <h1 className="text-xl sm:text-2xl font-light text-[#333333] mb-6 sm:mb-8">
@@ -161,28 +212,101 @@ function DashboardContent({ user }) {
       </h1>
       
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
-        <StatCard icon={Package} label="Total Orders" value="0" color="bg-blue-50 text-blue-600" />
+        <StatCard icon={Package} label="Total Orders" value={ordersLoading ? "..." : orders.length} color="bg-blue-50 text-blue-600" />
         <StatCard icon={Heart} label="In Wishlist" value={user.wishlist?.length || 0} color="bg-pink-50 text-pink-600" />
         <StatCard icon={Ticket} label="Available Coupons" value="1" color="bg-orange-50 text-orange-600" />
       </div>
 
       <div className="border-t border-gray-50 pt-10">
         <h3 className="text-sm font-bold uppercase tracking-widest text-[#333333] mb-6">Recent Order Status</h3>
-        <p className="text-sm text-gray-400 italic">No recent orders found.</p>
+        {latestOrder ? (
+          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-[#AF8F75]">{latestOrder.orderNumber}</p>
+                <p className="mt-2 text-sm text-gray-500">{formatDate(latestOrder.createdAt)}</p>
+              </div>
+              <div className="text-left sm:text-right">
+                <p className="text-sm font-bold text-[#333333]">{formatPrice(latestOrder.total)}</p>
+                <p className="mt-1 text-xs font-bold uppercase tracking-widest text-green-600">{latestOrder.orderStatus}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400 italic">No recent orders found.</p>
+        )}
       </div>
     </div>
   );
 }
 
-function OrdersContent() {
+function OrdersContent({ orders, loading, error }) {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <h2 className="text-lg sm:text-xl font-light text-[#333333] mb-6 sm:mb-8">Your Orders</h2>
-      <div className="text-center py-14 sm:py-20 border border-dashed border-gray-200 rounded-3xl">
-        <ShoppingBag size={48} className="mx-auto text-gray-100 mb-4" />
-        <p className="text-sm text-gray-400">You haven't placed any orders yet.</p>
-        <Link href="/shop" className="mt-6 inline-block text-[10px] font-bold uppercase tracking-widest text-[#AF8F75] border-b border-[#AF8F75] pb-0.5">Start Shopping</Link>
-      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="animate-spin text-[#AF8F75]" size={32} />
+        </div>
+      ) : error ? (
+        <div className="rounded-2xl border border-red-100 bg-red-50 p-5 text-sm font-medium text-red-700">
+          {error}
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="text-center py-14 sm:py-20 border border-dashed border-gray-200 rounded-3xl">
+          <ShoppingBag size={48} className="mx-auto text-gray-100 mb-4" />
+          <p className="text-sm text-gray-400">You haven't placed any orders yet.</p>
+          <Link href="/shop" className="mt-6 inline-block text-[10px] font-bold uppercase tracking-widest text-[#AF8F75] border-b border-[#AF8F75] pb-0.5">Start Shopping</Link>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {orders.map((order) => (
+            <article key={order._id} className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-4 border-b border-gray-50 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#AF8F75]">{order.orderNumber}</p>
+                  <p className="mt-2 text-sm text-gray-500">Placed on {formatDate(order.createdAt)}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full bg-green-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-green-700">
+                    {order.orderStatus}
+                  </span>
+                  <span className="rounded-full bg-orange-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-orange-700">
+                    Payment {order.paymentStatus}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {order.items.map((item) => (
+                  <div key={`${order._id}-${item.product}`} className="flex items-center justify-between gap-4 text-sm">
+                    <div className="min-w-0">
+                      <p className="line-clamp-1 font-medium text-[#333333]">{item.name}</p>
+                      <p className="mt-1 text-xs text-gray-400">Qty {item.quantity}</p>
+                    </div>
+                    <p className="shrink-0 font-semibold text-[#333333]">{formatPrice(item.lineTotal)}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 grid gap-4 rounded-2xl bg-gray-50 p-4 text-sm sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Ship to</p>
+                  <p className="mt-2 leading-6 text-gray-600">
+                    {order.shippingAddress.fullName}<br />
+                    {order.shippingAddress.addressLine1}, {order.shippingAddress.city}
+                  </p>
+                </div>
+                <div className="sm:text-right">
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Order total</p>
+                  <p className="mt-2 text-lg font-bold text-[#333333]">{formatPrice(order.total)}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

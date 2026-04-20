@@ -1,20 +1,38 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Search, User, ShoppingBag, ChevronLeft, ChevronRight, X, LogOut, Settings, Package, Menu } from "lucide-react";
 import MegaMenu from "@/components/MegaMenu";
 import AuthModal from "@/components/AuthModal";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [openSearch, setOpenSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showShopSubmenu, setShowShopSubmenu] = useState(false);
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const query = searchTerm.trim();
+
+    if (!query) {
+      router.push("/shop");
+      setOpenSearch(false);
+      return;
+    }
+
+    router.push(`/shop?search=${encodeURIComponent(query)}`);
+    setOpenSearch(false);
+  };
 
   const handleUserClick = () => {
     if (user) {
@@ -110,6 +128,11 @@ export default function Navbar() {
             <Link href="/cart">
               <Icon className="relative">
                 <ShoppingBag size={22} strokeWidth={1} />
+                {itemCount > 0 && (
+                  <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#76543F] px-1 text-[10px] font-bold text-white">
+                    {itemCount > 99 ? "99+" : itemCount}
+                  </span>
+                )}
               </Icon>
             </Link>
           </div>
@@ -131,15 +154,17 @@ export default function Navbar() {
       {/* 🔍 SEARCH BAR */}
       {openSearch && (
         <div className="absolute top-full left-0 w-full bg-white border-b border-[#B39178]/20 px-6 py-4 flex items-center justify-between shadow-md origin-top animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center w-full max-w-7xl mx-auto gap-4">
+          <form onSubmit={handleSearchSubmit} className="flex items-center w-full max-w-7xl mx-auto gap-4">
             <Search size={22} className="text-[#333333]" strokeWidth={1} />
             <input
               type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="SEARCH FOR..."
               autoFocus
               className="w-full outline-none text-[13px] tracking-[0.15em] placeholder:text-[#333333]/50 bg-transparent text-[#333333]"
             />
-          </div>
+          </form>
           <button
             onClick={() => setOpenSearch(false)}
             className="text-[#333333] hover:text-[#B39178] transition-colors ml-4"

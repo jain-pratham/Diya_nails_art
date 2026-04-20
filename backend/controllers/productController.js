@@ -73,9 +73,12 @@ exports.getProducts = async (req, res) => {
     };
 
     if (req.query.search) {
+      const search = String(req.query.search).trim();
       filter.$or = [
-        { name: { $regex: req.query.search, $options: 'i' } },
-        { description: { $regex: req.query.search, $options: 'i' } },
+        { name: { $regex: search, $options: 'i' } },
+        { slug: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { tags: { $regex: search, $options: 'i' } },
       ];
     }
 

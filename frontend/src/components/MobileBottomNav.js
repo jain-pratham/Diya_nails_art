@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Heart, Home, ShoppingBag, User, ShoppingCart } from "lucide-react";
+import { useCart } from "@/context/CartContext";
 
 const ITEMS = [
   { href: "/", label: "Home", icon: Home },
@@ -14,6 +15,7 @@ const ITEMS = [
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const { itemCount } = useCart();
 
   if (pathname.startsWith("/admin")) {
     return null;
@@ -34,7 +36,14 @@ export default function MobileBottomNav() {
                 active ? "bg-[#F7F1E5] text-[#76543F]" : "text-[#6b5a4c]"
               }`}
             >
-              <Icon size={18} strokeWidth={active ? 2.4 : 1.8} />
+              <span className="relative">
+                <Icon size={18} strokeWidth={active ? 2.4 : 1.8} />
+                {item.label === "Cart" && itemCount > 0 && (
+                  <span className="absolute -right-2.5 -top-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#76543F] px-1 text-[9px] font-bold text-white">
+                    {itemCount > 99 ? "99+" : itemCount}
+                  </span>
+                )}
+              </span>
               <span className="truncate">{item.label}</span>
             </Link>
           );
