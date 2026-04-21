@@ -57,9 +57,12 @@ This document summarizes what has already been created and what is still left to
 - Checkout page is created at `/checkout` with:
   - Customer shipping address selection
   - New shipping address form
-  - Cash on delivery order placement
+  - Razorpay payment checkout
   - Coupon input
   - Shipping, discount, tax, and final total summary
+- Payment success and failure pages are created at:
+  - `/payment/success`
+  - `/payment/failure`
 - Customer account shows real orders in:
   - Dashboard recent order status
   - Orders tab
@@ -75,15 +78,32 @@ This document summarizes what has already been created and what is still left to
   - `/admin`
   - `/admin/products`
   - `/admin/products/new`
+  - `/admin/products/[id]/edit`
   - `/admin/categories`
+  - `/admin/orders`
+- Admin routes are protected in the frontend admin layout.
+- Product and category create/update/delete APIs require authenticated admin users.
 - Admin product creation supports:
   - Name
   - Price
   - Description
   - Stock
-  - Multiple images as data URLs
+  - Multiple images uploaded to Cloudinary through the backend
   - Product tags
   - Custom tags
+- Admin product editing supports details, stock, tags, and hosted image URLs.
+- Admin category create/edit/delete UI is created.
+- Admin order management is created with:
+  - All customer orders
+  - Shipping details
+  - Order items
+  - Order status updates
+  - Payment status updates
+- Admin dashboard stats are connected for:
+  - Revenue
+  - Orders
+  - Products
+  - Customers
 - Product filtering by tags is started.
 - Public image assets are added, including logo, hero images, and occasion images.
 
@@ -111,9 +131,9 @@ This document summarizes what has already been created and what is still left to
 - Product API routes are created:
   - Get all products
   - Get one product
-  - Create product
-  - Update product
-  - Delete product
+  - Create product, admin only
+  - Update product, admin only
+  - Delete product, admin only
 - Cart API routes are created:
   - Get cart
   - Add item to cart
@@ -123,34 +143,25 @@ This document summarizes what has already been created and what is still left to
 - Order model and order API routes are created:
   - Preview checkout totals
   - Create order from cart
+  - Create Razorpay payment order/session
+  - Verify Razorpay payment signature
+  - Mark payment failures
   - Get customer orders
   - Get one customer order
 - Order creation saves completed orders to the database.
-- Product stock is reduced after successful order placement.
-- User cart is cleared after successful order placement.
+- Payment ID, payment status, provider order ID, signature, and payment details are stored with orders.
+- Product stock is reduced after successful order placement/payment verification.
+- User cart is cleared after successful order placement/payment verification.
 - Category model, controller, and routes are created.
+- Category create/update/delete routes are admin only.
+- Admin API routes are created for:
+  - Dashboard stats
+  - All orders
+  - Order status updates
+  - Cloudinary image uploads
 - Request body size handling is added for image uploads.
 
 ## Left To Complete
-
-### Payments
-
-- Add a payment gateway such as Razorpay, Stripe, PhonePe, or Cashfree.
-- Create backend payment order/session API.
-- Verify payment status securely on the backend.
-- Store payment ID, payment status, and transaction details with orders.
-- Add payment success and payment failure pages.
-
-### Admin
-
-- Protect admin routes so only admins can access them.
-- Add admin middleware to product and category create/update/delete APIs.
-- Add product edit page.
-- Add category create/edit UI.
-- Add order management page for admins.
-- Add order status updates such as pending, paid, shipped, delivered, cancelled.
-- Add dashboard stats for orders, revenue, customers, and products.
-- Replace image data URL storage with proper image upload storage such as Cloudinary, S3, or another image hosting service.
 
 ### Customer Account
 

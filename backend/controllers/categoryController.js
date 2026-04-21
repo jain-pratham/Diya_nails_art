@@ -1,6 +1,30 @@
 const Category = require('../models/Category');
 const Product = require('../models/Product');
 
+const slugify = (value) =>
+  String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+
+const generateUniqueSlug = async (name, excludeId) => {
+  const baseSlug = slugify(name) || `category-${Date.now()}`;
+  let nextSlug = baseSlug;
+  let counter = 1;
+
+  while (await Category.findOne({
+    slug: nextSlug,
+    ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+  })) {
+    counter += 1;
+    nextSlug = `${baseSlug}-${counter}`;
+  }
+
+  return nextSlug;
+};
+
 // @desc    Get all categories
 // @route   GET /api/categories
 // @access  Public
@@ -33,7 +57,17 @@ exports.getCategory = async (req, res) => {
 // @access  Private/Admin
 exports.createCategory = async (req, res) => {
   try {
-    const category = await Category.create(req.body);
+    const name = String(req.body.name || '').trim();
+
+    if (!name) {
+      return res.status(400).json({ message: 'Category name is required' });
+    }
+
+    const category = await Category.create({
+      name,
+      slug: await generateUniqueSlug(name),
+      description: String(req.body.description || '').trim(),
+    });
     res.status(201).json(category);
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
@@ -45,7 +79,21 @@ exports.createCategory = async (req, res) => {
 // @access  Private/Admin
 exports.updateCategory = async (req, res) => {
   try {
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+    const update = {
+      description: String(req.body.description || '').trim(),
+    };
+
+    if (req.body.name !== undefined) {
+      update.name = String(req.body.name || '').trim();
+
+      if (!update.name) {
+        return res.status(400).json({ message: 'Category name is required' });
+      }
+
+      update.slug = await generateUniqueSlug(update.name, req.params.id);
+    }
+
+    const category = await Category.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true
     });

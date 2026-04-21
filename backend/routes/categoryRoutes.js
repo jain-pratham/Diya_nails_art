@@ -7,15 +7,15 @@ const {
   updateCategory,
   deleteCategory
 } = require('../controllers/categoryController');
+const { protect, admin } = require('../middleware/authMiddleware');
 
-// TODO: Add protect, admin middlewares for POST, PUT, DELETE
 router.route('/')
   .get(getCategories)
-  .post(createCategory);
+  .post(protect, admin, createCategory);
 
 router.route('/:id')
   .get(getCategory)
-  .put(updateCategory)
-  .delete(deleteCategory);
+  .put(protect, admin, updateCategory)
+  .delete(protect, admin, deleteCategory);
 
 module.exports = router;

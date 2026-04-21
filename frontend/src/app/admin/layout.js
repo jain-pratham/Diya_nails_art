@@ -2,18 +2,50 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Package, Hash, ArrowLeft, Menu, X } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { LayoutDashboard, Package, Hash, ArrowLeft, Menu, X, ShoppingBag, Loader2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/categories", label: "Tags / Legacy", icon: Hash },
+  { href: "/admin/categories", label: "Categories", icon: Hash },
+  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
 ];
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f6f3ef] text-[#3f2a20]">
+        <Loader2 className="animate-spin" size={34} />
+      </div>
+    );
+  }
+
+  if (!user?.isAdmin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f6f3ef] px-4 text-center text-[#3f2a20]">
+        <div className="max-w-md rounded-2xl border border-[#e7ddd3] bg-white p-8 shadow-sm">
+          <h1 className="text-2xl font-semibold">Admin access required</h1>
+          <p className="mt-3 text-sm leading-6 text-[#7e6554]">
+            Login with an admin account to manage products, categories, and orders.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="mt-6 rounded-xl bg-[#3f2a20] px-5 py-3 text-sm font-medium text-white"
+          >
+            Back to store
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f6f3ef] text-gray-900">
@@ -108,7 +140,7 @@ export default function AdminLayout({ children }) {
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#a8836e]">Admin Panel</p>
               <h1 className="mt-2 text-2xl font-semibold text-[#3f2a20]">Diya&apos;s Nail Art</h1>
               <p className="mt-2 text-sm leading-6 text-[#7e6554]">
-                Manage products and tags from one clean dashboard.
+                Manage products, categories, orders, and revenue from one clean dashboard.
               </p>
             </div>
 

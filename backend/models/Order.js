@@ -53,13 +53,35 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["cod", "upi", "card"],
+      enum: ["cod", "upi", "card", "razorpay"],
       default: "cod",
+    },
+    paymentProvider: {
+      type: String,
+      enum: ["cod", "razorpay"],
+      default: "cod",
+    },
+    paymentOrderId: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    paymentId: {
+      type: String,
+      default: "",
+    },
+    paymentSignature: {
+      type: String,
+      default: "",
     },
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
+    },
+    paymentDetails: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
     },
     orderStatus: {
       type: String,

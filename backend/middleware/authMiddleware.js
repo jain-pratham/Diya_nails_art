@@ -18,6 +18,10 @@ const protect = async (req, res, next) => {
       // Get user from the token (excluding password)
       req.user = await User.findById(decoded.id).select("-password");
 
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authorized, user not found" });
+      }
+
       next();
     } catch (error) {
       console.error("Token verification failed:", error.message);
@@ -30,4 +34,13 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const admin = (req, res, next) => {
+  if (req.user?.isAdmin) {
+    next();
+    return;
+  }
+
+  return res.status(403).json({ message: "Not authorized as an admin" });
+};
+
+module.exports = { protect, admin };

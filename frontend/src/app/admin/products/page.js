@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Image as ImageIcon, Loader2, Plus, Trash2 } from "lucide-react";
+import { Edit3, Image as ImageIcon, Loader2, Plus, Trash2 } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { tagDisplayName } from "@/lib/productTags";
+import { useAuth } from "@/context/AuthContext";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -13,6 +14,7 @@ const currencyFormatter = new Intl.NumberFormat("en-IN", {
 });
 
 export default function AdminProducts() {
+  const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,6 +41,9 @@ export default function AdminProducts() {
     try {
       const response = await fetch(apiUrl(`/api/products/${id}`), {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${user?.token || ""}`,
+        },
       });
 
       if (response.ok) {
@@ -94,14 +99,23 @@ export default function AdminProducts() {
                           <h3 className="truncate font-semibold text-gray-900">{product.name}</h3>
                           <p className="mt-1 line-clamp-2 text-sm text-gray-500">{product.description}</p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => deleteProduct(product._id)}
-                          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-red-50 p-2 text-red-600"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex shrink-0 gap-2">
+                          <Link
+                            href={`/admin/products/${product._id}/edit`}
+                            className="inline-flex items-center justify-center rounded-lg bg-gray-50 p-2 text-gray-700"
+                            title="Edit"
+                          >
+                            <Edit3 size={16} />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => deleteProduct(product._id)}
+                            className="inline-flex items-center justify-center rounded-lg bg-red-50 p-2 text-red-600"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -170,6 +184,13 @@ export default function AdminProducts() {
                     {currencyFormatter.format(product.price || 0)}
                   </td>
                   <td className="px-6 py-4 text-right">
+                    <Link
+                      href={`/admin/products/${product._id}/edit`}
+                      className="mr-2 inline-flex items-center justify-center rounded-lg bg-gray-50 p-2 text-gray-700 hover:bg-gray-100"
+                      title="Edit"
+                    >
+                      <Edit3 size={16} />
+                    </Link>
                     <button
                       type="button"
                       onClick={() => deleteProduct(product._id)}

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2, MapPin, ShoppingBag, Ticket } from "lucide-react";
+import { CreditCard, Loader2, MapPin, ShieldCheck, ShoppingBag, Ticket } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -28,6 +28,25 @@ const emptyAddress = {
   country: "India",
 };
 
+const loadRazorpayScript = () =>
+  new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve(false);
+      return;
+    }
+
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -40,7 +59,6 @@ export default function CheckoutPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
-  const [placedOrder, setPlacedOrder] = useState(null);
 
   const savedAddresses = useMemo(() => user?.addresses || [], [user?.addresses]);
   const selectedAddress = addressMode === "saved" ? savedAddresses[selectedAddressIndex] : newAddress;
@@ -115,7 +133,13 @@ export default function CheckoutPage() {
     setPlacing(true);
 
     try {
-      const response = await fetch(apiUrl("/api/orders"), {
+      const isRazorpayReady = await loadRazorpayScript();
+
+      if (!isRazorpayReady) {
+        throw new Error("Unable to load Razorpay checkout. Please try again.");
+      }
+
+      const response = await fetch(apiUrl("/api/orders/payment-order"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -124,17 +148,88 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           shippingAddress: selectedAddress,
           couponCode,
-          paymentMethod: "cod",
         }),
       });
-      const data = await response.json();
+      const paymentOrder = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Unable to place order");
+        throw new Error(paymentOrder.message || "Unable to start payment");
       }
 
-      setPlacedOrder(data);
-      await refreshCart();
+      const markPaymentFailed = async (reason) => {
+        await fetch(apiUrl("/api/orders/payment-failure"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders,
+          },
+          body: JSON.stringify({
+            orderId: paymentOrder.orderId,
+            reason,
+          }),
+        }).catch(() => {});
+      };
+
+      const razorpay = new window.Razorpay({
+        key: paymentOrder.keyId,
+        amount: paymentOrder.amount,
+        currency: paymentOrder.currency,
+        name: paymentOrder.name,
+        description: paymentOrder.description,
+        order_id: paymentOrder.razorpayOrderId,
+        prefill: paymentOrder.customer,
+        notes: {
+          orderNumber: paymentOrder.orderNumber,
+        },
+        theme: {
+          color: "#201712",
+        },
+        handler: async (paymentResponse) => {
+          try {
+            const verifyResponse = await fetch(apiUrl("/api/orders/verify-payment"), {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...authHeaders,
+              },
+              body: JSON.stringify({
+                orderId: paymentOrder.orderId,
+                ...paymentResponse,
+              }),
+            });
+            const verifiedOrder = await verifyResponse.json();
+
+            if (!verifyResponse.ok) {
+              throw new Error(verifiedOrder.message || "Payment verification failed");
+            }
+
+            await refreshCart();
+            router.push(
+              `/payment/success?orderNumber=${encodeURIComponent(verifiedOrder.orderNumber)}&paymentId=${encodeURIComponent(verifiedOrder.paymentId || "")}`
+            );
+          } catch (err) {
+            setError(err.message);
+            router.push(`/payment/failure?reason=${encodeURIComponent(err.message)}`);
+          }
+        },
+        modal: {
+          ondismiss: async () => {
+            await markPaymentFailed("Payment window was closed before completion");
+            router.push("/payment/failure?reason=Payment%20window%20was%20closed");
+          },
+        },
+      });
+
+      razorpay.on("payment.failed", async (failureResponse) => {
+        const reason =
+          failureResponse.error?.description ||
+          failureResponse.error?.reason ||
+          "Payment failed";
+        await markPaymentFailed(reason);
+        router.push(`/payment/failure?reason=${encodeURIComponent(reason)}`);
+      });
+
+      razorpay.open();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -154,31 +249,6 @@ export default function CheckoutPage() {
           <Link href="/cart" className="mt-6 inline-flex rounded-full bg-[#201712] px-6 py-3 text-sm font-medium text-white">
             Back to cart
           </Link>
-        </div>
-      </main>
-    );
-  }
-
-  if (placedOrder) {
-    return (
-      <main className="min-h-screen bg-[#fffdfa] px-4 py-16 text-[#2e241d]">
-        <div className="mx-auto max-w-2xl rounded-3xl border border-[#dbeed8] bg-white p-8 text-center shadow-sm">
-          <CheckCircle2 className="mx-auto text-green-600" size={52} />
-          <h1 className="mt-5 text-3xl font-light">Order placed successfully</h1>
-          <p className="mt-3 text-sm text-[#7a6453]">
-            Order number: <span className="font-semibold text-[#201712]">{placedOrder.orderNumber}</span>
-          </p>
-          <p className="mt-2 text-sm text-[#7a6453]">
-            Total paid on delivery: {formatPrice(placedOrder.total)}
-          </p>
-          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/account?tab=orders" className="rounded-full bg-[#201712] px-6 py-3 text-sm font-medium text-white">
-              View orders
-            </Link>
-            <Link href="/shop" className="rounded-full border border-[#d9c3ad] px-6 py-3 text-sm font-medium text-[#5f4a3c]">
-              Continue shopping
-            </Link>
-          </div>
         </div>
       </main>
     );
@@ -283,12 +353,19 @@ export default function CheckoutPage() {
           </div>
 
           <div className="rounded-3xl border border-[#eadcca] bg-white p-5 sm:p-6">
-            <h2 className="text-lg font-semibold text-[#201712]">Payment</h2>
-            <div className="mt-4 rounded-2xl border border-[#eadcca] bg-[#fbf5ef] p-4">
-              <p className="text-sm font-semibold text-[#201712]">Cash on Delivery</p>
+            <div className="flex items-center gap-3">
+              <CreditCard size={20} className="text-[#B39178]" />
+              <h2 className="text-lg font-semibold text-[#201712]">Payment</h2>
+            </div>
+            <div className="mt-4 rounded-2xl border border-[#B39178] bg-[#fbf5ef] p-4">
+              <p className="text-sm font-semibold text-[#201712]">Pay securely with Razorpay</p>
               <p className="mt-1 text-sm leading-6 text-[#7a6453]">
-                Payment gateway can be added later. For now, orders are saved as COD with pending payment status.
+                Cards, UPI, net banking, and supported wallets are handled through Razorpay checkout.
               </p>
+              <div className="mt-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#7d5a45]">
+                <ShieldCheck size={14} />
+                Backend verified payment
+              </div>
             </div>
           </div>
         </section>
@@ -367,7 +444,7 @@ export default function CheckoutPage() {
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#201712] px-5 py-4 text-sm font-medium text-white transition hover:bg-[#B39178] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {placing && <Loader2 className="animate-spin" size={16} />}
-              {placing ? "Placing order..." : "Place Order"}
+              {placing ? "Starting payment..." : `Pay ${formatPrice(preview?.total)}`}
             </button>
           </div>
         </aside>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Loader2, UploadCloud, X, Check, Plus } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { PRODUCT_TAG_GROUPS, normalizeTag } from "@/lib/productTags";
+import { useAuth } from "@/context/AuthContext";
 
 const MAX_IMAGE_SIZE_MB = 5;
 const MAX_TOTAL_IMAGE_SIZE_MB = 18;
@@ -85,6 +86,7 @@ function TagGroup({ group, selectedTags, onToggle }) {
 
 export default function NewProduct() {
   const router = useRouter();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -146,9 +148,23 @@ export default function NewProduct() {
       }
 
       const uploads = await Promise.all(files.map((file) => readFileAsDataUrl(file)));
+      const response = await fetch(apiUrl("/api/admin/uploads/images"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user?.token || ""}`,
+        },
+        body: JSON.stringify({ images: uploads }),
+      });
+      const data = await parseApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data?.error || data?.message || "Failed to upload images");
+      }
+
       setFormData((current) => ({
         ...current,
-        images: [...current.images, ...uploads],
+        images: [...current.images, ...(data?.images || []).map((image) => image.url)],
       }));
     } catch (error) {
       console.error(error);
@@ -175,6 +191,7 @@ export default function NewProduct() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${user?.token || ""}`,
         },
         body: JSON.stringify({
           name: formData.name.trim(),
@@ -319,7 +336,7 @@ export default function NewProduct() {
                   <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
               </div>
-              <p className="mt-2 text-xs text-[#8f7767]">Images are stored as simple data URLs for this setup.</p>
+              <p className="mt-2 text-xs text-[#8f7767]">Images upload to Cloudinary and only hosted URLs are saved.</p>
             </div>
 
             <div className="rounded-[24px] border border-[#ebe1d7] bg-[#fcfaf7] p-4 sm:rounded-3xl sm:p-5">

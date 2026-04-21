@@ -63,6 +63,17 @@ const normalizeTagsArray = (tagsValue) => {
   return [];
 };
 
+const normalizeImageUrls = (imagesValue) => {
+  if (!Array.isArray(imagesValue)) {
+    return [];
+  }
+
+  return imagesValue
+    .map((image) => String(image || '').trim())
+    .filter(Boolean)
+    .filter((image) => !image.startsWith('data:'));
+};
+
 // @desc    Get all products
 // @route   GET /api/products
 // @access  Public
@@ -145,7 +156,7 @@ exports.createProduct = async (req, res) => {
       slug: await generateUniqueSlug(name),
       price: Number(req.body.price),
       description,
-      images: Array.isArray(req.body.images) ? req.body.images : [],
+      images: normalizeImageUrls(req.body.images),
       tags: normalizeTagsArray(req.body.tags),
       stock: Number(req.body.stock),
     };
@@ -176,7 +187,7 @@ exports.updateProduct = async (req, res) => {
     if (update.price !== undefined) update.price = Number(update.price);
     if (update.stock !== undefined) update.stock = Number(update.stock);
     if (update.tags !== undefined) update.tags = normalizeTagsArray(update.tags);
-    if (update.images !== undefined && !Array.isArray(update.images)) update.images = [];
+    if (update.images !== undefined) update.images = normalizeImageUrls(update.images);
     if (update.name !== undefined) update.slug = await generateUniqueSlug(update.name, req.params.id);
 
     const product = await Product.findByIdAndUpdate(req.params.id, update, {
