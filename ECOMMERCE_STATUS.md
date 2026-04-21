@@ -66,13 +66,19 @@ This document summarizes what has already been created and what is still left to
 - Customer account shows real orders in:
   - Dashboard recent order status
   - Orders tab
+- Customer order detail page is created at `/account/orders/[id]`.
 - Customer account page is created at `/account` with sections for:
   - Dashboard
   - Orders
   - Addresses
-  - Wishlist
-  - Coupons
+  - Wishlist connected to backend data
+  - Coupons connected to backend coupon data
   - Settings
+- Favorite/wishlist buttons are connected to real backend wishlist data.
+- Password reset pages are created:
+  - `/forgot-password`
+  - `/reset-password`
+- Email verification page is created at `/verify-email`.
 - Login/register modal and authentication context are created.
 - Admin dashboard pages are created:
   - `/admin`
@@ -117,8 +123,16 @@ This document summarizes what has already been created and what is still left to
   - Login
   - Get profile
   - Update profile
+  - Wishlist get/add/remove
+  - Request password reset
+  - Reset password
+  - Generate email verification token
+  - Verify email
 - JWT auth middleware is created.
 - User model is created.
+- User model supports wishlist, email verification, and password reset tokens.
+- Coupon model and public coupon API are created.
+- Default `WELCOME15` coupon is seeded into MongoDB on backend startup if missing.
 - Product model is created with:
   - Name
   - Slug
@@ -162,16 +176,6 @@ This document summarizes what has already been created and what is still left to
 - Request body size handling is added for image uploads.
 
 ## Left To Complete
-
-### Customer Account
-
-- Connect favorite/wishlist buttons to real backend wishlist data.
-- Show real wishlist products.
-- Show real order history.
-- Add order detail page.
-- Improve coupons so they are stored and validated by backend.
-- Add password reset flow.
-- Add email verification if needed.
 
 ### Product Experience
 

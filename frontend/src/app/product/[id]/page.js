@@ -8,6 +8,7 @@ import { Star, Heart, Minus, Plus, ShieldCheck, Truck, RefreshCw, Award, ArrowLe
 import { apiUrl } from "@/lib/api";
 import { tagDisplayName } from "@/lib/productTags";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 const reviews = [
   {
@@ -59,6 +60,7 @@ export default function ProductPage() {
   const [adding, setAdding] = useState(false);
   const [cartMessage, setCartMessage] = useState("");
   const { addToCart } = useCart();
+  const { wishlist, toggleWishlist } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -90,6 +92,7 @@ export default function ProductPage() {
 
   const images = useMemo(() => product?.images?.length ? product.images : ["/hero1.png"], [product]);
   const isSoldOut = (product?.stock || 0) <= 0;
+  const isWishlisted = wishlist.some((item) => (item._id || item) === product?._id);
 
   const toggle = (section) => {
     setOpenSection(openSection === section ? null : section);
@@ -291,8 +294,12 @@ export default function ProductPage() {
                   >
                   {adding ? "Adding..." : isSoldOut ? "Sold Out" : "Add To Cart"}
                 </button>
-                <button className="hidden sm:flex w-14 h-14 border-2 border-gray-100 rounded-full items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-100 transition-all bg-white group shadow-sm">
-                  <Heart size={22} className="group-active:fill-red-500" strokeWidth={1.5} />
+                <button
+                  type="button"
+                  onClick={() => toggleWishlist(product._id).catch((err) => setCartMessage(err.message))}
+                  className="hidden sm:flex w-14 h-14 border-2 border-gray-100 rounded-full items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-100 transition-all bg-white group shadow-sm"
+                >
+                  <Heart size={22} className={isWishlisted ? "fill-red-500 text-red-500" : "group-active:fill-red-500"} strokeWidth={1.5} />
                 </button>
               </div>
               <button
@@ -308,9 +315,13 @@ export default function ProductPage() {
                   {cartMessage}
                 </p>
               )}
-              <button className="sm:hidden w-full flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white h-12 text-sm font-semibold text-[#7e6554] shadow-sm">
-                <Heart size={18} />
-                Save to Wishlist
+              <button
+                type="button"
+                onClick={() => toggleWishlist(product._id).catch((err) => setCartMessage(err.message))}
+                className="sm:hidden w-full flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white h-12 text-sm font-semibold text-[#7e6554] shadow-sm"
+              >
+                <Heart size={18} className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
+                {isWishlisted ? "Saved to Wishlist" : "Save to Wishlist"}
               </button>
             </div>
           </div>

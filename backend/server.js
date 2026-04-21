@@ -8,6 +8,7 @@ const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const couponRoutes = require("./routes/couponRoutes");
 
 dotenv.config();
 
@@ -52,6 +53,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/coupons", couponRoutes);
 
 app.get("/", (req, res) => {
   res.send("API Running");

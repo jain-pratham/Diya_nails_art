@@ -1,12 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useCallback, useContext, useState, useEffect } from "react";
 import { apiUrl } from "@/lib/api";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -14,7 +15,9 @@ export const AuthProvider = ({ children }) => {
     // Check if user is logged in on load
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      setWishlist(parsedUser.wishlist || []);
     }
     setLoading(false);
   }, []);
@@ -39,6 +42,7 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("user", JSON.stringify(data));
       setUser(data);
+      setWishlist(data.wishlist || []);
       return data;
     } catch (err) {
       setError(err.message);
@@ -68,6 +72,7 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("user", JSON.stringify(data));
       setUser(data);
+      setWishlist(data.wishlist || []);
       return data;
     } catch (err) {
       setError(err.message);
@@ -80,6 +85,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("user");
     setUser(null);
+    setWishlist([]);
   };
 
   const updateProfile = async (userData) => {
@@ -111,6 +117,7 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("user", JSON.stringify(data));
       setUser(data);
+      setWishlist(data.wishlist || []);
       return data;
     } catch (err) {
       setError(err.message);
@@ -120,16 +127,62 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshWishlist = useCallback(async () => {
+    if (!user?.token) {
+      setWishlist([]);
+      return [];
+    }
+
+    const response = await fetch(apiUrl("/api/auth/wishlist"), {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Unable to load wishlist");
+    }
+
+    setWishlist(Array.isArray(data) ? data : []);
+    return data;
+  }, [user?.token]);
+
+  const toggleWishlist = useCallback(async (productId) => {
+    if (!user?.token) {
+      throw new Error("Please login to save wishlist items");
+    }
+
+    const isSaved = wishlist.some((item) => (item._id || item) === productId);
+    const response = await fetch(apiUrl(`/api/auth/wishlist/${productId}`), {
+      method: isSaved ? "DELETE" : "POST",
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Unable to update wishlist");
+    }
+
+    setWishlist(Array.isArray(data) ? data : []);
+    return data;
+  }, [user?.token, wishlist]);
+
   return (
     <AuthContext.Provider
       value={{
         user,
+        wishlist,
         loading,
         error,
         login,
         register,
         logout,
         updateProfile,
+        refreshWishlist,
+        toggleWishlist,
         setError,
       }}
     >

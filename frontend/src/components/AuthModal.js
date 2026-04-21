@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Mail, Lock, User, Github, Chrome, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 
 export default function AuthModal({ isOpen, onClose }) {
   const { login, register, loading, error, setError } = useAuth();
@@ -149,12 +150,13 @@ export default function AuthModal({ isOpen, onClose }) {
 
             {isLogin && (
               <div className="flex justify-end">
-                <button
-                  type="button"
+                <Link
+                  href="/forgot-password"
+                  onClick={onClose}
                   className="text-xs text-[#B39178] hover:text-[#76543F] font-medium transition-colors"
                 >
                   Forgot Password?
-                </button>
+                </Link>
               </div>
             )}
 

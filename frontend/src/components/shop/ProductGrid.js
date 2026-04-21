@@ -16,6 +16,7 @@ import {
 import { apiUrl } from "@/lib/api";
 import { normalizeTag, tagDisplayName } from "@/lib/productTags";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -25,7 +26,8 @@ const currencyFormatter = new Intl.NumberFormat("en-IN", {
 
 function ProductActions({ product, onQuickView }) {
   const { addToCart } = useCart();
-  const [wishlisted, setWishlisted] = useState(false);
+  const { wishlist, toggleWishlist } = useAuth();
+  const wishlisted = wishlist.some((item) => (item._id || item) === product._id);
   const [adding, setAdding] = useState(false);
   const isSoldOut = Number(product.stock || 0) <= 0;
 
@@ -47,7 +49,7 @@ function ProductActions({ product, onQuickView }) {
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          setWishlisted((value) => !value);
+          toggleWishlist(product._id).catch((error) => alert(error.message));
         }}
         className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#2e221d] shadow-[0_10px_24px_rgba(0,0,0,0.12)] transition hover:bg-[#f7efe5] hover:text-[#d92972]"
         aria-label="Add to wishlist"

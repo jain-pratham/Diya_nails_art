@@ -1,34 +1,32 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const User = require("../models/User");
+const Coupon = require("../models/Coupon");
+const { isCouponLive } = require("./couponController");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 
 const FREE_SHIPPING_MINIMUM = 499;
 const STANDARD_SHIPPING_FEE = 79;
-const VALID_COUPONS = {
-  WELCOME15: {
-    minimumSubtotal: 999,
-    percent: 15,
-  },
-};
-
-const calculateDiscount = (subtotal, couponCode) => {
+const calculateDiscount = async (subtotal, couponCode) => {
   const normalizedCode = String(couponCode || "").trim().toUpperCase();
-  const coupon = VALID_COUPONS[normalizedCode];
+  const coupon = normalizedCode ? await Coupon.findOne({ code: normalizedCode }) : null;
 
-  if (!coupon || subtotal < coupon.minimumSubtotal) {
+  if (!coupon || !isCouponLive(coupon) || subtotal < coupon.minimumSubtotal) {
     return { couponCode: "", discount: 0 };
   }
 
+  const percentDiscount = Math.round((subtotal * Number(coupon.percent || 0)) / 100);
+  const flatDiscount = Number(coupon.amount || 0);
+
   return {
     couponCode: normalizedCode,
-    discount: Math.round((subtotal * coupon.percent) / 100),
+    discount: Math.min(subtotal, Math.max(percentDiscount, flatDiscount)),
   };
 };
 
-const calculateTotals = (subtotal, couponCode) => {
-  const { couponCode: appliedCouponCode, discount } = calculateDiscount(subtotal, couponCode);
+const calculateTotals = async (subtotal, couponCode) => {
+  const { couponCode: appliedCouponCode, discount } = await calculateDiscount(subtotal, couponCode);
   const shippingFee = subtotal >= FREE_SHIPPING_MINIMUM ? 0 : STANDARD_SHIPPING_FEE;
   const tax = 0;
   const total = Math.max(0, subtotal - discount + shippingFee + tax);
@@ -138,7 +136,7 @@ const buildOrderFromCart = async (userId, couponCode) => {
   });
 
   const subtotal = items.reduce((total, item) => total + item.lineTotal, 0);
-  const totals = calculateTotals(subtotal, couponCode);
+  const totals = await calculateTotals(subtotal, couponCode);
 
   return { user, items, totals };
 };

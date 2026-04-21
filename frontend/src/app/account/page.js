@@ -175,7 +175,7 @@ export default function AccountPage() {
             {activeTab === "dashboard" && <DashboardContent user={user} orders={orders} ordersLoading={ordersLoading} />}
             {activeTab === "orders" && <OrdersContent orders={orders} loading={ordersLoading} error={ordersError} />}
             {activeTab === "addresses" && <AddressesContent user={user} />}
-            {activeTab === "wishlist" && <WishlistContent wishlist={user.wishlist} />}
+            {activeTab === "wishlist" && <WishlistContent />}
             {activeTab === "coupons" && <CouponsContent />}
             {activeTab === "settings" && <SettingsContent user={user} />}
           </main>
@@ -267,6 +267,9 @@ function OrdersContent({ orders, loading, error }) {
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-[#AF8F75]">{order.orderNumber}</p>
                   <p className="mt-2 text-sm text-gray-500">Placed on {formatDate(order.createdAt)}</p>
+                  <Link href={`/account/orders/${order._id}`} className="mt-3 inline-block text-xs font-bold uppercase tracking-widest text-[#AF8F75] underline underline-offset-4">
+                    View details
+                  </Link>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full bg-green-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-green-700">
@@ -562,46 +565,124 @@ function AddressModal({ onClose, onSubmit, loading }) {
   );
 }
 
-function WishlistContent({ wishlist }) {
+function WishlistContent() {
+  const { wishlist, refreshWishlist, toggleWishlist } = useAuth();
+  const [loading, setLoading] = useState(true);
   const hasItems = wishlist && wishlist.length > 0;
 
+  useEffect(() => {
+    refreshWishlist().finally(() => setLoading(false));
+  }, [refreshWishlist]);
+
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 text-center py-8 sm:py-10">
-      <Heart size={48} className={`mx-auto mb-6 ${hasItems ? 'text-pink-100' : 'text-gray-100'}`} />
-      <h2 className="text-lg font-light text-[#333333] mb-2">
-        {hasItems ? `Items in your Wishlist (${wishlist.length})` : 'Your Wishlist is Empty'}
-      </h2>
-      <p className="text-xs text-gray-400 mb-8">Save items you love to find them later.</p>
-      <Link href="/shop" className="inline-block bg-[#AF8F75] text-white px-8 sm:px-10 py-3 rounded-xl text-xs font-bold tracking-widest uppercase hover:bg-[#8e735e] transition-colors">
-        {hasItems ? 'View Shop' : 'Go Shopping'}
-      </Link>
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 py-8 sm:py-10">
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="animate-spin text-[#AF8F75]" size={32} />
+        </div>
+      ) : !hasItems ? (
+        <div className="text-center">
+          <Heart size={48} className="mx-auto mb-6 text-gray-100" />
+          <h2 className="text-lg font-light text-[#333333] mb-2">Your Wishlist is Empty</h2>
+          <p className="text-xs text-gray-400 mb-8">Save items you love to find them later.</p>
+          <Link href="/shop" className="inline-block bg-[#AF8F75] text-white px-8 sm:px-10 py-3 rounded-xl text-xs font-bold tracking-widest uppercase hover:bg-[#8e735e] transition-colors">
+            Go Shopping
+          </Link>
+        </div>
+      ) : (
+        <div>
+          <h2 className="text-lg sm:text-xl font-light text-[#333333] mb-6">Wishlist ({wishlist.length})</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {wishlist.map((product) => (
+              <article key={product._id} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                <div className="flex gap-4">
+                  <Link href={`/product/${product._id}`} className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                    {product.images?.[0] ? (
+                      <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-gray-300">
+                        <Package size={24} />
+                      </div>
+                    )}
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/product/${product._id}`} className="line-clamp-1 text-sm font-bold text-[#333333]">
+                      {product.name}
+                    </Link>
+                    <p className="mt-2 text-sm font-semibold text-[#AF8F75]">{formatPrice(product.price)}</p>
+                    <button
+                      type="button"
+                      onClick={() => toggleWishlist(product._id)}
+                      className="mt-3 text-xs font-bold uppercase tracking-widest text-red-500"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function CouponsContent() {
+  const [coupons, setCoupons] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCoupons = async () => {
+      try {
+        const response = await fetch(apiUrl("/api/coupons"));
+        const data = await response.json();
+        setCoupons(Array.isArray(data) ? data : []);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCoupons();
+  }, []);
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <h2 className="text-lg sm:text-xl font-light text-[#333333] mb-6 sm:mb-8">Available Coupons</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="flex border border-dashed border-[#AF8F75] rounded-2xl overflow-hidden">
-          <div className="bg-[#AF8F75] p-6 flex flex-col items-center justify-center text-white">
-            <span className="text-2xl font-bold">15%</span>
-            <span className="text-[10px] uppercase font-bold tracking-widest">Off</span>
-          </div>
-          <div className="p-6 flex-1 bg-white">
-            <p className="text-xs font-bold text-[#333333] uppercase tracking-wide mb-1">WELCOME15</p>
-            <p className="text-[11px] text-gray-400 mb-4">On orders over ₹999</p>
-            <button className="text-[10px] font-bold text-[#AF8F75] uppercase tracking-widest border border-[#AF8F75] px-4 py-1.5 rounded hover:bg-[#AF8F75] hover:text-white transition-colors">Copy Code</button>
-          </div>
+      {loading ? (
+        <Loader2 className="animate-spin text-[#AF8F75]" size={30} />
+      ) : coupons.length === 0 ? (
+        <p className="text-sm text-gray-400">No active coupons right now.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {coupons.map((coupon) => (
+            <div key={coupon._id} className="flex border border-dashed border-[#AF8F75] rounded-2xl overflow-hidden">
+              <div className="bg-[#AF8F75] p-6 flex flex-col items-center justify-center text-white">
+                <span className="text-2xl font-bold">{coupon.percent ? `${coupon.percent}%` : formatPrice(coupon.amount)}</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest">Off</span>
+              </div>
+              <div className="p-6 flex-1 bg-white">
+                <p className="text-xs font-bold text-[#333333] uppercase tracking-wide mb-1">{coupon.code}</p>
+                <p className="text-[11px] text-gray-400 mb-4">On orders over {formatPrice(coupon.minimumSubtotal)}</p>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard?.writeText(coupon.code)}
+                  className="text-[10px] font-bold text-[#AF8F75] uppercase tracking-widest border border-[#AF8F75] px-4 py-1.5 rounded hover:bg-[#AF8F75] hover:text-white transition-colors"
+                >
+                  Copy Code
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 function SettingsContent({ user }) {
   const { updateProfile, loading: updating, error } = useAuth();
+  const [verificationMessage, setVerificationMessage] = useState("");
   const [formData, setFormData] = useState({
     name: user.name || "",
     email: user.email || "",
@@ -625,6 +706,22 @@ function SettingsContent({ user }) {
     }
   };
 
+  const resendVerification = async () => {
+    setVerificationMessage("");
+    const response = await fetch(apiUrl("/api/auth/resend-verification"), {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    });
+    const data = await response.json();
+    setVerificationMessage(
+      data.verificationToken
+        ? `${data.message} Token: ${data.verificationToken}`
+        : data.message || "Verification link generated"
+    );
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-xl">
       <h2 className="text-lg sm:text-xl font-light text-[#333333] mb-6 sm:mb-8">Profile Settings</h2>
@@ -640,6 +737,16 @@ function SettingsContent({ user }) {
           {error}
         </div>
       )}
+
+      <div className={`mb-6 rounded-2xl border p-4 text-xs font-bold ${user.isEmailVerified ? "border-green-100 bg-green-50 text-green-700" : "border-orange-100 bg-orange-50 text-orange-700"}`}>
+        Email status: {user.isEmailVerified ? "Verified" : "Not verified"}
+        {!user.isEmailVerified && (
+          <button type="button" onClick={resendVerification} className="ml-3 underline underline-offset-4">
+            Generate verification link
+          </button>
+        )}
+        {verificationMessage && <p className="mt-2 font-medium normal-case tracking-normal">{verificationMessage}</p>}
+      </div>
 
       <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-2">
