@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Edit3, Loader2, Plus, Trash2, X } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
 
 const emptyForm = {
   name: "",
@@ -12,6 +13,7 @@ const emptyForm = {
 
 export default function AdminCategories() {
   const { user } = useAuth();
+  const toast = useToast();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -86,9 +88,11 @@ export default function AdminCategories() {
         setCategories((current) => [data, ...current]);
       }
 
+      toast.success(editingCategory ? "Category updated successfully" : "Category created successfully");
       resetForm();
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Unable to save category");
     } finally {
       setSaving(false);
     }
@@ -109,9 +113,11 @@ export default function AdminCategories() {
       }
 
       setCategories((current) => current.filter((category) => category._id !== id));
+      toast.success("Category deleted successfully");
       if (editingCategory?._id === id) resetForm();
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Unable to delete category");
     }
   };
 

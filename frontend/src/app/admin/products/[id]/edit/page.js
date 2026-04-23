@@ -7,6 +7,7 @@ import { Check, Loader2, Plus, UploadCloud, X } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { PRODUCT_TAG_GROUPS, normalizeTag } from "@/lib/productTags";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
 
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
@@ -26,6 +27,7 @@ export default function EditProductPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -123,7 +125,7 @@ export default function EditProductPage() {
         images: [...current.images, ...(data?.images || []).map((image) => image.url)],
       }));
     } catch (err) {
-      alert(err.message || "Unable to upload images");
+      toast.error(err.message || "Unable to upload images");
     } finally {
       setUploading(false);
       event.target.value = "";
@@ -164,9 +166,11 @@ export default function EditProductPage() {
         throw new Error(data?.error || data?.message || "Unable to update product");
       }
 
+      toast.success("Product updated successfully");
       router.push("/admin/products");
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Unable to update product");
     } finally {
       setSaving(false);
     }

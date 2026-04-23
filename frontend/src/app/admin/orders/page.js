@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, RefreshCw, ShoppingBag } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
 
 const ORDER_STATUSES = ["placed", "confirmed", "processing", "shipped", "delivered", "cancelled"];
 const PAYMENT_STATUSES = ["pending", "paid", "failed", "refunded"];
@@ -26,6 +27,7 @@ const formatDate = (date) =>
 
 export default function AdminOrdersPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState("");
@@ -84,8 +86,10 @@ export default function AdminOrdersPage() {
       }
 
       setOrders((current) => current.map((order) => (order._id === data._id ? data : order)));
+      toast.success("Order updated successfully");
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Unable to update order");
     } finally {
       setUpdatingId("");
     }

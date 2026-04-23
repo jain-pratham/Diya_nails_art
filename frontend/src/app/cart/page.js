@@ -27,6 +27,10 @@ export default function CartPage() {
   } = useCart();
 
   const remaining = Math.max(0, FREE_SHIPPING - subtotal);
+  const hasUnavailableItems = items.some((item) => {
+    const stock = Number(item.product?.stock || 0);
+    return stock <= 0 || item.quantity > stock;
+  });
 
   return (
     <main className="min-h-screen bg-[#fffdfa] text-[#2e241d]">
@@ -95,8 +99,18 @@ export default function CartPage() {
                               </h2>
                             </Link>
                             <p className="mt-1 text-sm text-[#8a7465]">
-                              Stock available: {stock}
+                              {stock > 0 ? `Stock available: ${stock}` : "Sold out"}
                             </p>
+                            {stock > 0 && item.quantity > stock && (
+                              <p className="mt-1 text-sm font-medium text-red-600">
+                                Please reduce quantity to {stock} before checkout.
+                              </p>
+                            )}
+                            {stock <= 0 && (
+                              <p className="mt-1 text-sm font-medium text-red-600">
+                                Remove this sold-out item before checkout.
+                              </p>
+                            )}
                           </div>
 
                           <button
@@ -141,7 +155,7 @@ export default function CartPage() {
                             <button
                               type="button"
                               onClick={() => updateQuantity(product._id, item.quantity + 1)}
-                              disabled={stock > 0 && item.quantity >= stock}
+                              disabled={stock <= 0 || item.quantity >= stock}
                               className="flex h-9 w-9 items-center justify-center rounded-lg text-[#5f4a3c] transition hover:bg-[#f0e2d4] disabled:cursor-not-allowed disabled:opacity-40"
                               aria-label={`Increase quantity for ${product.name}`}
                             >
@@ -208,10 +222,20 @@ export default function CartPage() {
                 </div>
 
                 <Link
-                  href="/checkout"
-                  className="mt-6 block w-full rounded-xl bg-[#201712] px-5 py-4 text-center text-sm font-medium text-white transition hover:bg-[#B39178]"
+                  href={hasUnavailableItems ? "#" : "/checkout"}
+                  aria-disabled={hasUnavailableItems}
+                  onClick={(event) => {
+                    if (hasUnavailableItems) {
+                      event.preventDefault();
+                    }
+                  }}
+                  className={`mt-6 block w-full rounded-xl px-5 py-4 text-center text-sm font-medium text-white transition ${
+                    hasUnavailableItems
+                      ? "cursor-not-allowed bg-[#8a7465] opacity-60"
+                      : "bg-[#201712] hover:bg-[#B39178]"
+                  }`}
                 >
-                  Proceed to Checkout
+                  {hasUnavailableItems ? "Fix unavailable items" : "Proceed to Checkout"}
                 </Link>
 
                 <Link

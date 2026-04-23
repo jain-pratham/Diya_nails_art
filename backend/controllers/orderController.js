@@ -96,6 +96,30 @@ const validateAddress = (address) => {
   return requiredFields.every((field) => address[field]);
 };
 
+const consumeStock = async (item) => {
+  const product = await Product.findOneAndUpdate(
+    {
+      _id: item.product,
+      stock: { $gte: item.quantity },
+    },
+    {
+      $inc: {
+        stock: -item.quantity,
+        salesCount: item.quantity,
+      },
+    },
+    { new: true }
+  );
+
+  if (!product) {
+    return {
+      error: `${item.name} is no longer available in the requested quantity`,
+    };
+  }
+
+  return { product };
+};
+
 const buildOrderFromCart = async (userId, couponCode) => {
   const user = await User.findById(userId).populate({
     path: "cart.product",
@@ -111,12 +135,17 @@ const buildOrderFromCart = async (userId, couponCode) => {
     return { error: { status: 400, message: "Your cart is empty" } };
   }
 
-  const stockIssue = validCartItems.find((item) => item.quantity > item.product.stock);
+  const stockIssue = validCartItems.find((item) => item.product.stock <= 0 || item.quantity > item.product.stock);
   if (stockIssue) {
+    const message =
+      stockIssue.product.stock <= 0
+        ? `${stockIssue.product.name} is sold out`
+        : `${stockIssue.product.name} has only ${stockIssue.product.stock} left in stock`;
+
     return {
       error: {
         status: 400,
-        message: `${stockIssue.product.name} has only ${stockIssue.product.stock} left in stock`,
+        message,
       },
     };
   }
@@ -173,16 +202,13 @@ const createOrder = async (req, res) => {
     }
 
     for (const item of result.items) {
-      const product = await Product.findById(item.product);
+      const stockResult = await consumeStock(item);
 
-      if (!product || product.stock < item.quantity) {
+      if (stockResult.error) {
         return res.status(400).json({
-          message: `${item.name} is no longer available in the requested quantity`,
+          message: stockResult.error,
         });
       }
-
-      product.stock -= item.quantity;
-      await product.save();
     }
 
     const order = await Order.create({
@@ -314,11 +340,18 @@ const verifyPayment = async (req, res) => {
     };
 
     for (const item of order.items) {
-      const product = await Product.findById(item.product);
+      const stockResult = await consumeStock(item);
 
-      if (product) {
-        product.stock = Math.max(0, product.stock - item.quantity);
-        await product.save();
+      if (stockResult.error) {
+        order.paymentStatus = "failed";
+        order.paymentDetails = {
+          ...order.paymentDetails,
+          stockError: stockResult.error,
+          failedAt: new Date().toISOString(),
+        };
+        await order.save();
+
+        return res.status(400).json({ message: stockResult.error });
       }
     }
 

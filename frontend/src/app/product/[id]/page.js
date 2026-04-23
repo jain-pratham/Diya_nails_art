@@ -4,48 +4,67 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Heart, Minus, Plus, ShieldCheck, Truck, RefreshCw, Award, ArrowLeft, Loader2, Flame } from "lucide-react";
+import { Star, Heart, Minus, Plus, ShieldCheck, Truck, RefreshCw, Award, ArrowLeft, Loader2, Flame, ImageIcon } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { tagDisplayName } from "@/lib/productTags";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-
-const reviews = [
-  {
-    name: "Devanshi C.",
-    time: "3 days ago",
-    text: "Absolutely perfect for wedding functions! Super glossy finish and looked just like salon nails.",
-    rating: 5,
-    verified: true,
-  },
-  {
-    name: "Simran K.",
-    time: "1 month ago",
-    text: "Absolutely stunning! The glossy finish looks so classy and elegant.",
-    rating: 5,
-    verified: true,
-  },
-  {
-    name: "Naina B.",
-    time: "1 month ago",
-    text: "Perfect for weddings! The elegant glossy look matched my outfit beautifully.",
-    rating: 5,
-    verified: true,
-  },
-  {
-    name: "Princey S.",
-    time: "2 months ago",
-    text: "Wore these for a wedding and they looked luxurious and premium.",
-    rating: 5,
-    verified: true,
-  },
-];
+import { useToast } from "@/context/ToastContext";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
   maximumFractionDigits: 0,
 });
+
+const formatTimeAgo = (value) => {
+  const createdAt = new Date(value);
+  const diffMs = Date.now() - createdAt.getTime();
+  const diffDays = Math.max(0, Math.floor(diffMs / 86400000));
+
+  if (!Number.isFinite(diffDays) || diffDays === 0) return "Today";
+  if (diffDays === 1) return "1 day ago";
+  if (diffDays < 30) return `${diffDays} days ago`;
+
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths === 1) return "1 month ago";
+  if (diffMonths < 12) return `${diffMonths} months ago`;
+
+  const diffYears = Math.floor(diffMonths / 12);
+  return diffYears === 1 ? "1 year ago" : `${diffYears} years ago`;
+};
+
+function RelatedProductCard({ product }) {
+  const primaryImage = product.images?.[0];
+  const isSoldOut = Number(product.stock || 0) <= 0;
+
+  return (
+    <Link href={`/product/${product._id}`} className="group block overflow-hidden rounded-[24px] border border-[#eadfce] bg-white shadow-[0_16px_34px_rgba(115,80,60,0.06)] transition-transform hover:-translate-y-1">
+      <div className="relative aspect-[4/5] overflow-hidden bg-[#f6eee4]">
+        {primaryImage ? (
+          <Image
+            src={primaryImage}
+            alt={product.name}
+            fill
+            unoptimized
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-[#b59a86]">
+            <ImageIcon size={38} />
+          </div>
+        )}
+        <span className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-semibold text-white ${isSoldOut ? "bg-[#2e221d]" : "bg-[#d92972]"}`}>
+          {isSoldOut ? "Sold Out" : "In Stock"}
+        </span>
+      </div>
+      <div className="p-5">
+        <h3 className="line-clamp-2 text-[16px] leading-6 text-[#3f2a20]">{product.name}</h3>
+        <p className="mt-2 text-lg font-semibold text-[#B39178]">{currencyFormatter.format(product.price || 0)}</p>
+      </div>
+    </Link>
+  );
+}
 
 export default function ProductPage() {
   const params = useParams();
@@ -55,12 +74,18 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeImage, setActiveImage] = useState("");
+  const [reviews, setReviews] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [qty, setQty] = useState(1);
   const [openSection, setOpenSection] = useState("desc");
   const [adding, setAdding] = useState(false);
-  const [cartMessage, setCartMessage] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const toast = useToast();
   const { addToCart } = useCart();
-  const { wishlist, toggleWishlist } = useAuth();
+  const { user, wishlist, toggleWishlist } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -70,14 +95,23 @@ export default function ProductPage() {
       setError("");
 
       try {
-        const response = await fetch(apiUrl(`/api/products/${id}`));
-        const data = await response.json();
+        const [productResponse, reviewsResponse, relatedResponse] = await Promise.all([
+          fetch(apiUrl(`/api/products/${id}`)),
+          fetch(apiUrl(`/api/products/${id}/reviews`)),
+          fetch(apiUrl(`/api/products/${id}/related?limit=4`)),
+        ]);
+        const data = await productResponse.json();
 
-        if (!response.ok) {
+        if (!productResponse.ok) {
           throw new Error(data.message || "Product not found");
         }
 
+        const reviewsData = await reviewsResponse.json();
+        const relatedData = await relatedResponse.json();
+
         setProduct(data);
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+        setRelatedProducts(Array.isArray(relatedData) ? relatedData : []);
         setActiveImage(data.images?.[0] || "/hero1.png");
       } catch (err) {
         console.error(err);
@@ -93,6 +127,9 @@ export default function ProductPage() {
   const images = useMemo(() => product?.images?.length ? product.images : ["/hero1.png"], [product]);
   const isSoldOut = (product?.stock || 0) <= 0;
   const isWishlisted = wishlist.some((item) => (item._id || item) === product?._id);
+  const averageRating = Number(product?.averageRating || 0);
+  const reviewCount = Number(product?.reviewCount ?? reviews.length);
+  const displayedRating = reviewCount > 0 ? averageRating : 0;
 
   const toggle = (section) => {
     setOpenSection(openSection === section ? null : section);
@@ -102,19 +139,68 @@ export default function ProductPage() {
     if (!product || isSoldOut) return;
 
     setAdding(true);
-    setCartMessage("");
 
     try {
       await addToCart(product, qty);
-      setCartMessage("Added to cart");
-
       if (goToCart) {
         router.push("/cart");
       }
-    } catch (err) {
-      setCartMessage(err.message || "Unable to add item to cart");
+    } catch {
     } finally {
       setAdding(false);
+    }
+  };
+
+  const increaseQty = () => {
+    setQty((current) => Math.min(Number(product?.stock || 1), current + 1));
+  };
+
+  const handleSubmitReview = async (event) => {
+    event.preventDefault();
+
+    if (!user?.token) {
+      toast.warning("Please sign in to write a review");
+      return;
+    }
+
+    setReviewSaving(true);
+
+    try {
+      const response = await fetch(apiUrl(`/api/products/${id}/reviews`), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          rating: reviewRating,
+          title: reviewTitle,
+          comment: reviewComment,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to save review");
+      }
+
+      setReviews((current) => {
+        const withoutExisting = current.filter((review) => String(review.user?._id || review.user) !== String(user._id));
+        return [data.review, ...withoutExisting];
+      });
+      setProduct((current) => ({
+        ...current,
+        averageRating: data.summary?.averageRating ?? current.averageRating,
+        reviewCount: data.summary?.reviewCount ?? current.reviewCount,
+      }));
+      setReviewTitle("");
+      setReviewComment("");
+      setReviewRating(5);
+      toast.success("Thanks, your review has been saved");
+    } catch (err) {
+      toast.error(err.message || "Unable to save review");
+    } finally {
+      setReviewSaving(false);
     }
   };
 
@@ -217,11 +303,11 @@ export default function ProductPage() {
           <div className="flex items-center gap-2 mb-2 sm:mb-3">
             <div className="flex text-yellow-400">
               {[1, 2, 3, 4, 5].map((i) => (
-                <Star key={i} size={14} fill="currentColor" strokeWidth={1} />
+                <Star key={i} size={14} fill={i <= Math.round(displayedRating) ? "currentColor" : "none"} strokeWidth={1} />
               ))}
             </div>
             <span className="text-[11px] sm:text-[12px] text-gray-500 font-medium tracking-wide">
-              ({reviews.length} Verified Reviews)
+              ({reviewCount} Customer {reviewCount === 1 ? "Review" : "Reviews"})
             </span>
           </div>
 
@@ -280,15 +366,16 @@ export default function ProductPage() {
                   <span className="text-base sm:text-lg font-bold w-5 text-center">{qty}</span>
                   <button
                     type="button"
-                    onClick={() => setQty(qty + 1)}
-                    className="text-gray-400 hover:text-black transition-colors"
+                    onClick={increaseQty}
+                    disabled={isSoldOut || qty >= Number(product.stock || 0)}
+                    className="text-gray-400 hover:text-black transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Plus size={17} />
                   </button>
                 </div>
-                  <button
-                    type="button"
-                    onClick={() => handleAddToCart()}
+                <button
+                  type="button"
+                  onClick={() => handleAddToCart()}
                     disabled={isSoldOut || adding}
                     className="w-full sm:flex-1 bg-[#333333] hover:bg-black text-white rounded-full font-bold uppercase tracking-[0.16em] sm:tracking-[0.2em] text-[11px] sm:text-xs transition-all shadow-lg hover:shadow-xl active:scale-95 h-12 sm:h-14 disabled:cursor-not-allowed disabled:opacity-60"
                   >
@@ -296,7 +383,7 @@ export default function ProductPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => toggleWishlist(product._id).catch((err) => setCartMessage(err.message))}
+                  onClick={() => toggleWishlist(product._id).catch(() => {})}
                   className="hidden sm:flex w-14 h-14 border-2 border-gray-100 rounded-full items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-100 transition-all bg-white group shadow-sm"
                 >
                   <Heart size={22} className={isWishlisted ? "fill-red-500 text-red-500" : "group-active:fill-red-500"} strokeWidth={1.5} />
@@ -310,14 +397,9 @@ export default function ProductPage() {
               >
                 {adding ? "Adding..." : isSoldOut ? "Sold Out" : "Buy It Now"}
               </button>
-              {cartMessage && (
-                <p className="mb-3 text-center text-sm font-medium text-[#7a5641] sm:text-left">
-                  {cartMessage}
-                </p>
-              )}
               <button
                 type="button"
-                onClick={() => toggleWishlist(product._id).catch((err) => setCartMessage(err.message))}
+                onClick={() => toggleWishlist(product._id).catch(() => {})}
                 className="sm:hidden w-full flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white h-12 text-sm font-semibold text-[#7e6554] shadow-sm"
               >
                 <Heart size={18} className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
@@ -414,28 +496,74 @@ export default function ProductPage() {
               <div className="flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-10 mb-8 sm:mb-16 border-b border-gray-100 pb-8 sm:pb-12">
                 <div className="text-center md:text-left">
                   <div className="flex items-center justify-center md:justify-start gap-4 mb-2">
-                    <span className="text-4xl sm:text-6xl font-black text-[#333]">5.0</span>
+                    <span className="text-4xl sm:text-6xl font-black text-[#333]">
+                      {displayedRating ? displayedRating.toFixed(1) : "0.0"}
+                    </span>
                     <div>
                       <div className="flex text-yellow-400 mb-1">
                         {[1, 2, 3, 4, 5].map((i) => (
-                          <Star key={i} size={18} fill="currentColor" strokeWidth={1} />
+                          <Star key={i} size={18} fill={i <= Math.round(displayedRating) ? "currentColor" : "none"} strokeWidth={1} />
                         ))}
                       </div>
-                      <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#B39178]">Exceptional Quality</p>
+                      <p className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#B39178]">
+                        {reviewCount > 0 ? "Customer Rated" : "No Reviews Yet"}
+                      </p>
                     </div>
                   </div>
                   <p className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-wider">
-                    Based on {reviews.length} verified shoppers
+                    Based on {reviewCount} customer {reviewCount === 1 ? "review" : "reviews"}
                   </p>
                 </div>
-                <button className="w-full md:w-auto bg-[#333] hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-8 sm:px-10 py-4 sm:py-5 rounded-full shadow-lg transition-transform active:scale-95">
-                  Write A Review
-                </button>
+                <form onSubmit={handleSubmitReview} className="w-full max-w-xl space-y-3 rounded-3xl border border-[#f0e5dc] bg-[#FDFBF7] p-4 md:w-[440px]">
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <label className="flex-1 text-xs font-bold uppercase tracking-[0.16em] text-[#8d6f5a]">
+                      Rating
+                      <select
+                        value={reviewRating}
+                        onChange={(event) => setReviewRating(Number(event.target.value))}
+                        className="mt-2 w-full rounded-2xl border border-[#eadfce] bg-white px-4 py-3 text-sm text-[#3f2a20] outline-none"
+                      >
+                        {[5, 4, 3, 2, 1].map((rating) => (
+                          <option key={rating} value={rating}>{rating} star{rating === 1 ? "" : "s"}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="flex-[1.5] text-xs font-bold uppercase tracking-[0.16em] text-[#8d6f5a]">
+                      Title
+                      <input
+                        value={reviewTitle}
+                        onChange={(event) => setReviewTitle(event.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-[#eadfce] bg-white px-4 py-3 text-sm text-[#3f2a20] outline-none"
+                        placeholder="Loved the finish"
+                      />
+                    </label>
+                  </div>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(event) => setReviewComment(event.target.value)}
+                    required
+                    rows={3}
+                    className="w-full rounded-2xl border border-[#eadfce] bg-white px-4 py-3 text-sm text-[#3f2a20] outline-none"
+                    placeholder={user?.token ? "Share your experience with this set." : "Sign in to write a review."}
+                  />
+                  <button
+                    type="submit"
+                    disabled={reviewSaving}
+                    className="w-full bg-[#333] hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-8 py-4 rounded-full shadow-lg transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {reviewSaving ? "Saving..." : "Write A Review"}
+                  </button>
+                </form>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                {reviews.map((r, i) => (
-                  <div key={i} className="bg-[#FDFBF7] rounded-2xl p-5 sm:p-6 border border-gray-100 hover:shadow-md transition-all duration-300">
+              {reviews.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-[#dbcab9] bg-[#FDFBF7] p-8 text-center text-sm text-[#8c7361]">
+                  No customer reviews yet. Be the first to review this product.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {reviews.map((r) => (
+                    <div key={r._id} className="bg-[#FDFBF7] rounded-2xl p-5 sm:p-6 border border-gray-100 hover:shadow-md transition-all duration-300">
                     <div className="flex justify-between items-start mb-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-1.5">
@@ -446,7 +574,7 @@ export default function ProductPage() {
                             </div>
                           )}
                         </div>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{r.time}</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{formatTimeAgo(r.createdAt)}</p>
                       </div>
                       <div className="flex text-yellow-400">
                         {[...Array(5)].map((_, starIdx) => (
@@ -454,20 +582,35 @@ export default function ProductPage() {
                         ))}
                       </div>
                     </div>
-                    <p className="text-[13px] text-gray-600 leading-relaxed font-medium">{r.text}</p>
+                    {r.title && <p className="mb-2 text-[13px] font-black text-[#333]">{r.title}</p>}
+                    <p className="text-[13px] text-gray-600 leading-relaxed font-medium">{r.comment}</p>
                   </div>
-                ))}
-              </div>
-
-              <div className="text-center mt-10 sm:mt-12 pt-8 border-t border-gray-50">
-                <button className="text-[11px] font-black uppercase tracking-[0.3em] text-[#B39178] hover:text-[#333] transition-colors underline underline-offset-8">
-                  Show more reviews
-                </button>
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {relatedProducts.length > 0 && (
+        <section className="max-w-[1280px] mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#a8836e]">You may also like</p>
+              <h2 className="mt-2 text-3xl font-light tracking-tight text-[#3f2a20] sm:text-4xl">Related Products</h2>
+            </div>
+            <Link href="/shop" className="text-sm font-semibold text-[#7a5641] underline underline-offset-4 hover:text-[#3f2a20]">
+              View all products
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {relatedProducts.map((item) => (
+              <RelatedProductCard key={item._id} product={item} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

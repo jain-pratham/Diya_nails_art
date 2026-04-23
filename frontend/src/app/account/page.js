@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { apiUrl } from "@/lib/api";
+import { useToast } from "@/context/ToastContext";
 
 const SIDEBAR_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -256,7 +257,7 @@ function OrdersContent({ orders, loading, error }) {
       ) : orders.length === 0 ? (
         <div className="text-center py-14 sm:py-20 border border-dashed border-gray-200 rounded-3xl">
           <ShoppingBag size={48} className="mx-auto text-gray-100 mb-4" />
-          <p className="text-sm text-gray-400">You haven't placed any orders yet.</p>
+          <p className="text-sm text-gray-400">You haven&apos;t placed any orders yet.</p>
           <Link href="/shop" className="mt-6 inline-block text-[10px] font-bold uppercase tracking-widest text-[#AF8F75] border-b border-[#AF8F75] pb-0.5">Start Shopping</Link>
         </div>
       ) : (
@@ -324,7 +325,10 @@ function AddressesContent({ user }) {
     setUpdating(true);
     try {
       const updatedAddresses = [...addresses, { ...newAddress, isDefault: addresses.length === 0 }];
-      await updateProfile({ addresses: updatedAddresses });
+      await updateProfile(
+        { addresses: updatedAddresses },
+        { successMessage: "Address added successfully" }
+      );
       setIsModalOpen(false);
     } catch (err) {
       console.error("Failed to add address:", err);
@@ -341,7 +345,10 @@ function AddressesContent({ user }) {
       if (addresses[index].isDefault && updatedAddresses.length > 0) {
         updatedAddresses[0].isDefault = true;
       }
-      await updateProfile({ addresses: updatedAddresses });
+      await updateProfile(
+        { addresses: updatedAddresses },
+        { successMessage: "Address deleted successfully" }
+      );
     } catch (err) {
       console.error("Failed to delete address:", err);
     }
@@ -353,7 +360,10 @@ function AddressesContent({ user }) {
         ...addr,
         isDefault: i === index
       }));
-      await updateProfile({ addresses: updatedAddresses });
+      await updateProfile(
+        { addresses: updatedAddresses },
+        { successMessage: "Default address updated" }
+      );
     } catch (err) {
       console.error("Failed to set default address:", err);
     }
@@ -612,7 +622,7 @@ function WishlistContent() {
                     <p className="mt-2 text-sm font-semibold text-[#AF8F75]">{formatPrice(product.price)}</p>
                     <button
                       type="button"
-                      onClick={() => toggleWishlist(product._id)}
+                      onClick={() => toggleWishlist(product._id).catch(() => {})}
                       className="mt-3 text-xs font-bold uppercase tracking-widest text-red-500"
                     >
                       Remove
@@ -629,6 +639,7 @@ function WishlistContent() {
 }
 
 function CouponsContent() {
+  const toast = useToast();
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -666,7 +677,10 @@ function CouponsContent() {
                 <p className="text-[11px] text-gray-400 mb-4">On orders over {formatPrice(coupon.minimumSubtotal)}</p>
                 <button
                   type="button"
-                  onClick={() => navigator.clipboard?.writeText(coupon.code)}
+                  onClick={async () => {
+                    await navigator.clipboard?.writeText(coupon.code);
+                    toast.success(`Coupon code ${coupon.code} copied`);
+                  }}
                   className="text-[10px] font-bold text-[#AF8F75] uppercase tracking-widest border border-[#AF8F75] px-4 py-1.5 rounded hover:bg-[#AF8F75] hover:text-white transition-colors"
                 >
                   Copy Code
@@ -681,7 +695,8 @@ function CouponsContent() {
 }
 
 function SettingsContent({ user }) {
-  const { updateProfile, loading: updating, error } = useAuth();
+  const { updateProfile, loading: updating } = useAuth();
+  const toast = useToast();
   const [verificationMessage, setVerificationMessage] = useState("");
   const [formData, setFormData] = useState({
     name: user.name || "",
@@ -689,18 +704,15 @@ function SettingsContent({ user }) {
     phone: user.phone || "",
     password: "",
   });
-  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccess(false);
     try {
       const dataToUpdate = { ...formData };
       if (!dataToUpdate.password) delete dataToUpdate.password;
       
-      await updateProfile(dataToUpdate);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      await updateProfile(dataToUpdate, { successMessage: "Profile updated successfully" });
+      setFormData((current) => ({ ...current, password: "" }));
     } catch (err) {
       // Error handled by context
     }
@@ -708,36 +720,33 @@ function SettingsContent({ user }) {
 
   const resendVerification = async () => {
     setVerificationMessage("");
-    const response = await fetch(apiUrl("/api/auth/resend-verification"), {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-      },
-    });
-    const data = await response.json();
-    setVerificationMessage(
-      data.verificationToken
+    try {
+      const response = await fetch(apiUrl("/api/auth/resend-verification"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to generate verification link");
+      }
+
+      const message = data.verificationToken
         ? `${data.message} Token: ${data.verificationToken}`
-        : data.message || "Verification link generated"
-    );
+        : data.message || "Verification link generated";
+      setVerificationMessage(message);
+      toast.success(data.message || "Verification link generated");
+    } catch (error) {
+      toast.error(error.message || "Unable to generate verification link");
+    }
   };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 max-w-xl">
       <h2 className="text-lg sm:text-xl font-light text-[#333333] mb-6 sm:mb-8">Profile Settings</h2>
       
-      {success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-2xl text-green-600 text-xs font-bold text-center">
-          Profile updated successfully!
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-xs font-bold text-center">
-          {error}
-        </div>
-      )}
-
       <div className={`mb-6 rounded-2xl border p-4 text-xs font-bold ${user.isEmailVerified ? "border-green-100 bg-green-50 text-green-700" : "border-orange-100 bg-orange-50 text-orange-700"}`}>
         Email status: {user.isEmailVerified ? "Verified" : "Not verified"}
         {!user.isEmailVerified && (

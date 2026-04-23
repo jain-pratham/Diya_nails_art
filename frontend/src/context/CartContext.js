@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { apiUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
 
 const CartContext = createContext();
 const GUEST_CART_KEY = "guestCart";
@@ -56,8 +57,22 @@ const clearGuestCart = () => {
   localStorage.removeItem(GUEST_CART_KEY);
 };
 
+const fetchLatestProduct = async (productId) => {
+  const response = await fetch(apiUrl(`/api/products/${productId}`), {
+    cache: "no-store",
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Unable to verify product availability");
+  }
+
+  return data;
+};
+
 export function CartProvider({ children }) {
   const { user } = useAuth();
+  const toast = useToast();
   const [cart, setCart] = useState(emptyCart);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -138,6 +153,15 @@ export function CartProvider({ children }) {
 
     setError("");
     const safeQuantity = Math.max(1, Number(quantity) || 1);
+    const latestProduct = await fetchLatestProduct(product._id);
+    const availableStock = Number(latestProduct.stock || 0);
+
+    if (availableStock <= 0) {
+      const message = "Product is sold out";
+      setError(message);
+      toast.error(message);
+      throw new Error(message);
+    }
 
     if (!user?.token) {
       const guestCart = readGuestCart();
@@ -147,13 +171,15 @@ export function CartProvider({ children }) {
             item.product._id === product._id
               ? {
                   ...item,
-                  quantity: Math.min(product.stock || 999, item.quantity + safeQuantity),
+                  product: latestProduct,
+                  quantity: Math.min(availableStock, item.quantity + safeQuantity),
                 }
               : item
           )
-        : [...guestCart.items, { product, quantity: Math.min(product.stock || 999, safeQuantity) }];
+        : [...guestCart.items, { product: latestProduct, quantity: Math.min(availableStock, safeQuantity) }];
 
       saveGuestItems(nextItems);
+      toast.success("Added to cart");
       return;
     }
 
@@ -173,10 +199,12 @@ export function CartProvider({ children }) {
     if (!response.ok) {
       const message = data.message || "Unable to add item to cart";
       setError(message);
+      toast.error(message);
       throw new Error(message);
     }
 
     setCart(data);
+    toast.success("Added to cart");
   };
 
   const updateQuantity = async (productId, quantity) => {
@@ -184,10 +212,22 @@ export function CartProvider({ children }) {
     setError("");
 
     if (!user?.token) {
+      const latestProduct = await fetchLatestProduct(productId);
+      const availableStock = Number(latestProduct.stock || 0);
+
+      if (availableStock <= 0) {
+        const message = "Product is sold out";
+        setError(message);
+        toast.error(message);
+        throw new Error(message);
+      }
+
       const guestCart = readGuestCart();
       saveGuestItems(
         guestCart.items.map((item) =>
-          item.product._id === productId ? { ...item, quantity: safeQuantity } : item
+          item.product._id === productId
+            ? { ...item, product: latestProduct, quantity: Math.min(availableStock, safeQuantity) }
+            : item
         )
       );
       return;
@@ -206,6 +246,7 @@ export function CartProvider({ children }) {
     if (!response.ok) {
       const message = data.message || "Unable to update cart";
       setError(message);
+      toast.error(message);
       throw new Error(message);
     }
 
@@ -218,6 +259,7 @@ export function CartProvider({ children }) {
     if (!user?.token) {
       const guestCart = readGuestCart();
       saveGuestItems(guestCart.items.filter((item) => item.product._id !== productId));
+      toast.success("Item removed from cart");
       return;
     }
 
@@ -230,10 +272,12 @@ export function CartProvider({ children }) {
     if (!response.ok) {
       const message = data.message || "Unable to remove item";
       setError(message);
+      toast.error(message);
       throw new Error(message);
     }
 
     setCart(data);
+    toast.success("Item removed from cart");
   };
 
   const clearCart = async () => {
@@ -241,6 +285,7 @@ export function CartProvider({ children }) {
 
     if (!user?.token) {
       saveGuestItems([]);
+      toast.success("Cart cleared");
       return;
     }
 
@@ -253,10 +298,12 @@ export function CartProvider({ children }) {
     if (!response.ok) {
       const message = data.message || "Unable to clear cart";
       setError(message);
+      toast.error(message);
       throw new Error(message);
     }
 
     setCart(data);
+    toast.success("Cart cleared");
   };
 
   return (

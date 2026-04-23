@@ -8,6 +8,7 @@ import { CreditCard, Loader2, MapPin, ShieldCheck, ShoppingBag, Ticket } from "l
 import { apiUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
+import { useToast } from "@/context/ToastContext";
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("en-IN", {
@@ -50,6 +51,7 @@ const loadRazorpayScript = () =>
 export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const toast = useToast();
   const { items, itemCount, loading: cartLoading, refreshCart } = useCart();
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [addressMode, setAddressMode] = useState("saved");
@@ -121,12 +123,16 @@ export default function CheckoutPage() {
     setError("");
 
     if (!user?.token) {
-      setError("Please login before placing your order.");
+      const message = "Please login before placing your order.";
+      setError(message);
+      toast.warning(message);
       return;
     }
 
     if (!selectedAddress?.fullName || !selectedAddress?.addressLine1 || !selectedAddress?.city || !selectedAddress?.state || !selectedAddress?.zipCode) {
-      setError("Please select or enter a complete shipping address.");
+      const message = "Please select or enter a complete shipping address.";
+      setError(message);
+      toast.warning(message);
       return;
     }
 
@@ -209,6 +215,7 @@ export default function CheckoutPage() {
             );
           } catch (err) {
             setError(err.message);
+            toast.error(err.message || "Payment verification failed");
             router.push(`/payment/failure?reason=${encodeURIComponent(err.message)}`);
           }
         },
@@ -232,6 +239,7 @@ export default function CheckoutPage() {
       razorpay.open();
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Unable to start payment");
     } finally {
       setPlacing(false);
     }

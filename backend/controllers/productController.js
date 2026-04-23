@@ -103,7 +103,11 @@ exports.getProducts = async (req, res) => {
           sortOption = { price: -1 };
           break;
         case 'latest':
+        case 'newest':
           sortOption = { createdAt: -1 };
+          break;
+        case 'best_selling':
+          sortOption = { salesCount: -1, createdAt: -1 };
           break;
         case 'oldest':
           sortOption = { createdAt: 1 };
@@ -115,6 +119,46 @@ exports.getProducts = async (req, res) => {
 
     const products = await Product.find(filter).sort(sortOption);
     res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Get related products
+// @route   GET /api/products/:id/related
+// @access  Public
+exports.getRelatedProducts = async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 4, 1), 12);
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const tagFilter = product.tags?.length
+      ? {
+          _id: { $ne: product._id },
+          tags: { $in: product.tags },
+        }
+      : { _id: { $ne: product._id } };
+
+    let relatedProducts = await Product.find(tagFilter)
+      .sort({ salesCount: -1, createdAt: -1 })
+      .limit(limit);
+
+    if (relatedProducts.length < limit) {
+      const existingIds = relatedProducts.map((item) => item._id);
+      const fallbackProducts = await Product.find({
+        _id: { $nin: [product._id, ...existingIds] },
+      })
+        .sort({ salesCount: -1, createdAt: -1 })
+        .limit(limit - relatedProducts.length);
+
+      relatedProducts = [...relatedProducts, ...fallbackProducts];
+    }
+
+    res.status(200).json(relatedProducts);
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }

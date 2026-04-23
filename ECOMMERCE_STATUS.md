@@ -111,6 +111,10 @@ This document summarizes what has already been created and what is still left to
   - Products
   - Customers
 - Product filtering by tags is started.
+- Product sorting supports newest, price low to high, price high to low, and best selling.
+- Product detail page shows backend-backed customer reviews instead of static demo reviews.
+- Product detail page shows related products from the backend.
+- Sold-out products are labeled and blocked from add-to-cart, buy-now, and checkout flows.
 - Public image assets are added, including logo, hero images, and occasion images.
 
 ### Backend
@@ -141,6 +145,8 @@ This document summarizes what has already been created and what is still left to
   - Description
   - Tags
   - Stock
+  - Sales count
+  - Review summary
   - Timestamps
 - Product API routes are created:
   - Get all products
@@ -165,7 +171,10 @@ This document summarizes what has already been created and what is still left to
 - Order creation saves completed orders to the database.
 - Payment ID, payment status, provider order ID, signature, and payment details are stored with orders.
 - Product stock is reduced after successful order placement/payment verification.
+- Product sales counts are increased after successful order placement/payment verification.
 - User cart is cleared after successful order placement/payment verification.
+- Product reviews model, controller, and API routes are created.
+- Related products API is created.
 - Category model, controller, and routes are created.
 - Category create/update/delete routes are admin only.
 - Admin API routes are created for:
@@ -181,10 +190,6 @@ This document summarizes what has already been created and what is still left to
 
 - Add size/fit options if press-on nails need size selection.
 - Add product variants if needed, such as color, length, shape, finish, or set type.
-- Add sorting options such as newest, price low to high, price high to low, and best selling.
-- Add product reviews backend instead of static demo reviews.
-- Add related products on product detail page.
-- Add sold-out behavior so users cannot buy unavailable products.
 
 ### Production Readiness
 

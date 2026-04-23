@@ -2,10 +2,12 @@
 
 import { createContext, useCallback, useContext, useState, useEffect } from "react";
 import { apiUrl } from "@/lib/api";
+import { useToast } from "@/context/ToastContext";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const toast = useToast();
   const [user, setUser] = useState(null);
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,9 +45,11 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(data));
       setUser(data);
       setWishlist(data.wishlist || []);
+      toast.success(`Welcome back, ${data.name || "there"}!`);
       return data;
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Login failed");
       throw err;
     } finally {
       setLoading(false);
@@ -73,9 +77,11 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(data));
       setUser(data);
       setWishlist(data.wishlist || []);
+      toast.success("Account created successfully");
       return data;
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Registration failed");
       throw err;
     } finally {
       setLoading(false);
@@ -86,9 +92,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("user");
     setUser(null);
     setWishlist([]);
+    toast.info("You have been logged out");
   };
 
-  const updateProfile = async (userData) => {
+  const updateProfile = async (userData, options = {}) => {
     setLoading(true);
     setError(null);
     try {
@@ -118,9 +125,13 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("user", JSON.stringify(data));
       setUser(data);
       setWishlist(data.wishlist || []);
+      if (options.successMessage !== false) {
+        toast.success(options.successMessage || "Profile updated successfully");
+      }
       return data;
     } catch (err) {
       setError(err.message);
+      toast.error(err.message || "Profile update failed");
       throw err;
     } finally {
       setLoading(false);
@@ -150,7 +161,9 @@ export const AuthProvider = ({ children }) => {
 
   const toggleWishlist = useCallback(async (productId) => {
     if (!user?.token) {
-      throw new Error("Please login to save wishlist items");
+      const message = "Please login to save wishlist items";
+      toast.warning(message);
+      throw new Error(message);
     }
 
     const isSaved = wishlist.some((item) => (item._id || item) === productId);
@@ -163,12 +176,14 @@ export const AuthProvider = ({ children }) => {
     const data = await response.json();
 
     if (!response.ok) {
+      toast.error(data.message || "Unable to update wishlist");
       throw new Error(data.message || "Unable to update wishlist");
     }
 
     setWishlist(Array.isArray(data) ? data : []);
+    toast.success(isSaved ? "Removed from wishlist" : "Saved to wishlist");
     return data;
-  }, [user?.token, wishlist]);
+  }, [toast, user?.token, wishlist]);
 
   return (
     <AuthContext.Provider

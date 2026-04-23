@@ -49,7 +49,7 @@ function ProductActions({ product, onQuickView }) {
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          toggleWishlist(product._id).catch((error) => alert(error.message));
+          toggleWishlist(product._id).catch(() => {});
         }}
         className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#2e221d] shadow-[0_10px_24px_rgba(0,0,0,0.12)] transition hover:bg-[#f7efe5] hover:text-[#d92972]"
         aria-label="Add to wishlist"
@@ -159,6 +159,7 @@ function ProductCard({ product, onQuickView }) {
 function CollectionProductCard({ product, onQuickView }) {
   const primaryImage = product.images?.[0];
   const hasSalePrice = Number(product.originalPrice) > Number(product.price);
+  const isSoldOut = Number(product.stock || 0) <= 0;
 
   return (
     <article className="group">
@@ -177,7 +178,11 @@ function CollectionProductCard({ product, onQuickView }) {
           )}
         </Link>
 
-        {hasSalePrice && (
+        {isSoldOut ? (
+          <span className="absolute left-4 top-4 rounded-full bg-[#2e221d] px-3 py-1 text-xs font-semibold text-white">
+            Sold Out
+          </span>
+        ) : hasSalePrice ? (
           <span className="absolute left-4 top-4 rounded-full bg-[#e73379] px-3 py-1 text-xs font-semibold text-white">
             -
             {Math.round(
@@ -185,7 +190,7 @@ function CollectionProductCard({ product, onQuickView }) {
             )}
             %
           </span>
-        )}
+        ) : null}
 
         <ProductActions product={product} onQuickView={onQuickView} />
       </div>
@@ -204,6 +209,7 @@ function CollectionProductCard({ product, onQuickView }) {
             </span>
           )}
         </div>
+        {isSoldOut && <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#8f7767]">Unavailable</p>}
       </div>
     </article>
   );
@@ -215,7 +221,6 @@ function QuickViewModal({ product, onClose }) {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(product.images?.[0] || "");
   const [adding, setAdding] = useState(false);
-  const [message, setMessage] = useState("");
   const images = product.images?.length ? product.images : ["/ballerina_nails.png"];
   const isSoldOut = Number(product.stock || 0) <= 0;
 
@@ -223,16 +228,13 @@ function QuickViewModal({ product, onClose }) {
     if (isSoldOut || adding) return;
 
     setAdding(true);
-    setMessage("");
     try {
       await addToCart(product, quantity);
-      setMessage("Added to cart");
       if (goToCart) {
         onClose();
         router.push("/cart");
       }
-    } catch (error) {
-      setMessage(error.message || "Unable to add item");
+    } catch {
     } finally {
       setAdding(false);
     }
@@ -241,7 +243,6 @@ function QuickViewModal({ product, onClose }) {
   useEffect(() => {
     setQuantity(1);
     setActiveImage(product.images?.[0] || "/ballerina_nails.png");
-    setMessage("");
   }, [product]);
 
   return (
@@ -345,9 +346,6 @@ function QuickViewModal({ product, onClose }) {
           >
             Buy It Now
           </button>
-
-          {message && <p className="mt-4 text-sm font-medium text-[#7a5641]">{message}</p>}
-
           <Link
             href={`/product/${product._id}`}
             onClick={onClose}

@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Mail, Lock, User, Github, Chrome, Loader2 } from "lucide-react";
+import { X, Mail, Lock, User, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 
 export default function AuthModal({ isOpen, onClose }) {
-  const { login, register, loading, error, setError } = useAuth();
+  const { login, register, loading, setError } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -17,14 +16,15 @@ export default function AuthModal({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
-      setIsVisible(true);
       document.body.style.overflow = "hidden";
     } else {
-      const timer = setTimeout(() => setIsVisible(false), 300);
       document.body.style.overflow = "unset";
       setError(null); // Clear errors when closing
-      return () => clearTimeout(timer);
     }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen, setError]);
 
   const handleChange = (e) => {
@@ -45,12 +45,12 @@ export default function AuthModal({ isOpen, onClose }) {
     }
   };
 
-  if (!isOpen && !isVisible) return null;
+  if (!isOpen) return null;
 
   return (
     <div
       className={`fixed inset-0 z-[2000] flex items-center justify-center p-4 transition-all duration-300 ${
-        isOpen ? "opacity-100" : "opacity-0"
+        "opacity-100"
       }`}
     >
       {/* Backdrop */}
@@ -61,9 +61,7 @@ export default function AuthModal({ isOpen, onClose }) {
 
       {/* Modal Container */}
       <div
-        className={`relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden transition-all duration-500 transform ${
-          isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-8"
-        }`}
+        className="relative w-full max-w-md overflow-hidden rounded-[32px] bg-white/95 shadow-[0_20px_50px_rgba(0,0,0,0.15)] backdrop-blur-xl transition-all duration-500 transform scale-100 translate-y-0"
       >
         {/* Close Button */}
         <button
@@ -85,13 +83,6 @@ export default function AuthModal({ isOpen, onClose }) {
                 : "Join BlushNails for exclusive updates and offers"}
             </p>
           </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl">
-              <p className="text-sm text-red-600 text-center">{error}</p>
-            </div>
-          )}
 
           {/* Forms */}
           <form className="space-y-4" onSubmit={handleSubmit}>

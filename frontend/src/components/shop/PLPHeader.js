@@ -115,10 +115,10 @@ export default function PLPHeader({
                     onChange={(event) => updateQuery("sort", event.target.value)}
                     className="appearance-none rounded-full border border-[#eadfce] bg-white px-4 py-2 text-sm font-medium text-[#3f2a20] outline-none"
                   >
-                    <option value="latest">Best Selling</option>
+                    <option value="latest">Newest</option>
                     <option value="price_asc">Price low to high</option>
                     <option value="price_desc">Price high to low</option>
-                    <option value="oldest">Oldest</option>
+                    <option value="best_selling">Best selling</option>
                   </select>
                 </label>
               </div>
@@ -183,7 +183,7 @@ export default function PLPHeader({
                   <option value="latest">Newest</option>
                   <option value="price_asc">Price low to high</option>
                   <option value="price_desc">Price high to low</option>
-                  <option value="oldest">Oldest</option>
+                  <option value="best_selling">Best selling</option>
                 </select>
 
                 <div className="hidden items-center rounded-full border border-[#eadfce] bg-white p-1 md:flex">

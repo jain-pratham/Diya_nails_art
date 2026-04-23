@@ -7,6 +7,7 @@ import { Loader2, UploadCloud, X, Check, Plus } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { PRODUCT_TAG_GROUPS, normalizeTag } from "@/lib/productTags";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
 
 const MAX_IMAGE_SIZE_MB = 5;
 const MAX_TOTAL_IMAGE_SIZE_MB = 18;
@@ -87,6 +88,7 @@ function TagGroup({ group, selectedTags, onToggle }) {
 export default function NewProduct() {
   const router = useRouter();
   const { user } = useAuth();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -168,7 +170,7 @@ export default function NewProduct() {
       }));
     } catch (error) {
       console.error(error);
-      alert(error.message || "Failed to read images.");
+      toast.error(error.message || "Failed to upload images");
     } finally {
       setImageUploading(false);
       event.target.value = "";
@@ -209,10 +211,11 @@ export default function NewProduct() {
         throw new Error(data?.error || data?.message || "Failed to create product");
       }
 
+      toast.success("Product created successfully");
       router.push("/admin/products");
     } catch (error) {
       console.error(error);
-      alert(error.message || "Error creating product");
+      toast.error(error.message || "Error creating product");
     } finally {
       setLoading(false);
     }

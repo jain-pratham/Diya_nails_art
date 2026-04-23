@@ -6,6 +6,7 @@ import { Edit3, Image as ImageIcon, Loader2, Plus, Trash2 } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { tagDisplayName } from "@/lib/productTags";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/context/ToastContext";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -15,6 +16,7 @@ const currencyFormatter = new Intl.NumberFormat("en-IN", {
 
 export default function AdminProducts() {
   const { user } = useAuth();
+  const toast = useToast();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,9 +50,11 @@ export default function AdminProducts() {
 
       if (response.ok) {
         setProducts((current) => current.filter((product) => product._id !== id));
+        toast.success("Product deleted successfully");
       }
     } catch (error) {
       console.error("Failed to delete product", error);
+      toast.error("Failed to delete product");
     }
   };
 

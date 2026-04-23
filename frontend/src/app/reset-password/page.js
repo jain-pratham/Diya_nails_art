@@ -6,20 +6,20 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, Lock } from "lucide-react";
 import { apiUrl } from "@/lib/api";
+import { useToast } from "@/context/ToastContext";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
+  const toast = useToast();
   const [token, setToken] = useState(searchParams.get("token") || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
     setMessage("");
-    setError("");
 
     try {
       const response = await fetch(apiUrl("/api/auth/reset-password"), {
@@ -34,9 +34,10 @@ function ResetPasswordForm() {
       }
 
       setMessage(data.message);
+      toast.success(data.message || "Password reset successfully");
       setPassword("");
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message || "Unable to reset password");
     } finally {
       setLoading(false);
     }
@@ -76,7 +77,6 @@ function ResetPasswordForm() {
             {message} <Link href="/" className="font-semibold underline">Login now</Link>
           </div>
         )}
-        {error && <p className="mt-5 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       </div>
     </main>
   );

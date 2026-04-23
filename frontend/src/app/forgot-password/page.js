@@ -4,20 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2, Mail } from "lucide-react";
 import { apiUrl } from "@/lib/api";
+import { useToast } from "@/context/ToastContext";
 
 export default function ForgotPasswordPage() {
+  const toast = useToast();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [resetToken, setResetToken] = useState("");
-  const [error, setError] = useState("");
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
-    setMessage("");
     setResetToken("");
-    setError("");
 
     try {
       const response = await fetch(apiUrl("/api/auth/forgot-password"), {
@@ -31,10 +29,10 @@ export default function ForgotPasswordPage() {
         throw new Error(data.message || "Unable to request reset");
       }
 
-      setMessage(data.message);
+      toast.success(data.message || "Reset link generated");
       setResetToken(data.resetToken || "");
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message || "Unable to request reset");
     } finally {
       setLoading(false);
     }
@@ -61,14 +59,11 @@ export default function ForgotPasswordPage() {
             Send reset link
           </button>
         </form>
-
-        {message && <p className="mt-5 rounded-xl bg-green-50 p-3 text-sm text-green-700">{message}</p>}
         {resetToken && (
           <Link href={`/reset-password?token=${encodeURIComponent(resetToken)}`} className="mt-3 block rounded-xl border border-[#eadcca] p-3 text-sm font-medium text-[#7d5a45] underline underline-offset-4">
             Development reset link
           </Link>
         )}
-        {error && <p className="mt-5 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       </div>
     </main>
   );

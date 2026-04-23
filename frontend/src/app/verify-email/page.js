@@ -5,19 +5,19 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, MailCheck } from "lucide-react";
 import { apiUrl } from "@/lib/api";
+import { useToast } from "@/context/ToastContext";
 
 function VerifyEmailForm() {
   const searchParams = useSearchParams();
+  const toast = useToast();
   const [token, setToken] = useState(searchParams.get("token") || "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   const verify = async (event) => {
     event.preventDefault();
     setLoading(true);
     setMessage("");
-    setError("");
 
     try {
       const response = await fetch(apiUrl("/api/auth/verify-email"), {
@@ -32,8 +32,9 @@ function VerifyEmailForm() {
       }
 
       setMessage(data.message);
+      toast.success(data.message || "Email verified successfully");
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message || "Unable to verify email");
     } finally {
       setLoading(false);
     }
@@ -66,7 +67,6 @@ function VerifyEmailForm() {
             {message}
           </p>
         )}
-        {error && <p className="mt-5 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       </div>
     </main>
   );

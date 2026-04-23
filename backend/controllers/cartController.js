@@ -99,6 +99,10 @@ const updateCartItem = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
+    if (product.stock <= 0) {
+      return res.status(400).json({ message: "Product is out of stock" });
+    }
+
     const user = await User.findById(req.user._id);
     const existingItem = user.cart.find((item) => item.product.toString() === productId);
 
